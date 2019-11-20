@@ -1,0 +1,24 @@
+﻿  stdafx.cpp
+  CIniFile.cpp
+c:\users\kwon\desktop\corelib\corelib\cinifile.cpp(20): error C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\corecrt_wstring.h(205): note: 'wcsncpy' 선언을 참조하십시오.
+c:\users\kwon\desktop\corelib\corelib\cinifile.cpp(46): error C4996: '_itow': This function or variable may be unsafe. Consider using _itow_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\corecrt_wstdlib.h(64): note: '_itow' 선언을 참조하십시오.
+c:\users\kwon\desktop\corelib\corelib\cinifile.cpp(59): error C4996: '_swprintf': This function or variable may be unsafe. Consider using swprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\corecrt_wstdio.h(1446): note: '_swprintf' 선언을 참조하십시오.
+  CRegistry.cpp
+  Crypt.cpp
+  CService.cpp
+c:\users\kwon\desktop\corelib\corelib\cservice.cpp(19): error C4996: 'wcscat': This function or variable may be unsafe. Consider using wcscat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\corecrt_wstring.h(100): note: 'wcscat' 선언을 참조하십시오.
+c:\users\kwon\desktop\corelib\corelib\cservice.cpp(92): error C2066: 함수 형식으로 잘못 캐스트했습니다.
+c:\users\kwon\desktop\corelib\corelib\cservice.cpp(92): error C2440: '형식 캐스트': 'overloaded-function'에서 'SERVICE_MAIN_FUNCTIONW (__stdcall *)'(으)로 변환할 수 없습니다.
+  c:\users\kwon\desktop\corelib\corelib\cservice.cpp(92): note: 대상 형식과 일치하는 범위에 이름이 같은 함수가 없습니다.
+c:\users\kwon\desktop\corelib\corelib\cservice.cpp(95): error C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\corecrt_wstring.h(123): note: 'wcscpy' 선언을 참조하십시오.
+c:\users\kwon\desktop\corelib\corelib\cservice.cpp(128): error C2440: '형식 캐스트': 'overloaded-function'에서 'LPHANDLER_FUNCTION'(으)로 변환할 수 없습니다.
+  c:\users\kwon\desktop\corelib\corelib\cservice.cpp(128): note: 대상 형식과 일치하는 범위에 이름이 같은 함수가 없습니다.
+c:\users\kwon\desktop\corelib\corelib\cservice.cpp(128): error C2660: 'RegisterServiceCtrlHandlerW': 함수는 1개의 매개 변수를 사용하지 않습니다.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\um\winsvc.h(1559): note: 'RegisterServiceCtrlHandlerW' 선언을 참조하십시오.
+  CStream.cpp
+  코드를 생성하고 있습니다...
