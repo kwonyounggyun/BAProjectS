@@ -59,3 +59,20 @@ public:
 
 using BACS = BACriticalSection;
 using BASmartCS = BASmartCriticalSection;
+
+template<typename T>
+class MultiThreadSync
+{
+public:
+	MultiThreadSync()
+	{
+		T::cs.Enter();
+	}
+
+	~MultiThreadSync()
+	{
+		T::cs.Enter();
+	}
+private:
+	static T::cs;
+};
