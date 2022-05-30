@@ -1,186 +1,160 @@
-﻿// Network_test.cpp : 이 파일에는 'main' 함수가 포함됩니다. 거기서 프로그램 실행이 시작되고 종료됩니다.
-//
+﻿
+#ifndef UNICODE
+#define UNICODE
+#endif
 
-#include <iostream>
-#include <WinSock2.h>
-#include <vector>
-#include <memory>
+#define WIN32_LEAN_AND_MEAN
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <mswsock.h>
+#include <stdio.h>
 
-class CSocket
-{
-private:
-    SOCKET _socket;
-
-public:
-    CSocket() 
-    {
-        Initialize();
-    }
-    ~CSocket() 
-    {
-        Release();
-    }
-
-    bool Initialize()
-    {
-        _socket = socket(AF_INET, SOCK_STREAM, 0);
-        if (INVALID_SOCKET == _socket)
-            return false;
-
-        return true;
-    }
-
-    bool Release()
-    {
-        if (INVALID_SOCKET == _socket)
-            return true;
-
-        if (SOCKET_ERROR == closesocket(_socket))
-            return false;
-
-        _socket = INVALID_SOCKET;
-
-        return true;
-    }
-
-    inline SOCKET& GetSocket()
-    {
-        return _socket;
-    }
-};
-
-class Server
-{
-private:
-    CSocket _server_socket;
-    fd_set _read_set;
-    fd_set _write_set;
-
-public:
-    Server() {}
-    ~Server() {}
-
-    bool Initialize()
-    {
-        _server_socket.Initialize();
-        FD_ZERO(&_read_set);
-        FD_ZERO(&_write_set);
-
-        return true;
-    }
-
-    bool Bind(__int64 port) 
-    {
-        SOCKADDR_IN addr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
-        addr.sin_addr.S_un.S_addr = INADDR_ANY;
-
-        if (SOCKET_ERROR == bind(_server_socket.GetSocket(), (sockaddr*)&addr, sizeof(addr)))
-        {
-            return false;
-        }
-
-        FD_SET(_server_socket.GetSocket(), &_read_set);
-        FD_SET(_server_socket.GetSocket(), &_write_set);
-
-        return true;
-    }
-
-    bool Listen()
-    {
-        listen(_server_socket.GetSocket(), 10000);
-    }
-
-    bool OnAccept()
-    {
-        
-    }
-};
-
-class SocketThread
-{
-    enum STATUS
-    {
-        WAIT,
-        RUN,
-        STOP
-    };
-
-    fd_set _read_set;
-    fd_set _write_set;
-    fd_set _exception_set;
-    STATUS _status;
-    std::vector<CSocket*> _vec_socket;
-
-    SocketThread() 
-    {
-        _status = STATUS::WAIT;
-        _vec_socket.resize(1024);
-    }
-    ~SocketThread()
-    {
-
-    }
-
-    void Run() 
-    {
-        _status = STATUS::RUN;
-        timeval time_val;
-        time_val.tv_sec = 0;
-        time_val.tv_usec = 10;
-        while (STATUS::RUN == _status)
-        {
-            if (0 > select(FD_SETSIZE, &_read_set, &_write_set, &_exception_set, &time_val))
-            {
-                CloseAllSocket();
-                break;
-            }
-        }
-
-        Release();
-    }
-
-    int AddSocket(CSocket* socket)
-    {
-        for (auto i = 0; i < _vec_socket.size(); i++)
-        {
-            if(INVALID_SOCKET == _vec_socket[i]->GetSocket())
-            {
-
-            }
-        }
-    }
-
-    bool Release()
-    {
-        return true;
-    }
-
-    bool CloseAllSocket()
-    {
-        for (auto iter = _vec_socket.begin(); iter != _vec_socket.end(); iter++)
-        {
-            if (INVALID_SOCKET == iter->GetSocket())
-                continue;
-
-            iter->Release();
-        }
-    }
-};
+// Need to link with Ws2_32.lib
+#pragma comment(lib, "Ws2_32.lib")
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    //----------------------------------------
+    // Declare and initialize variables
+    WSADATA wsaData;
+    int iResult = 0;
+    BOOL bRetVal = FALSE;
+
+    HANDLE hCompPort;
+    HANDLE hCompPort2;
+
+    LPFN_ACCEPTEX lpfnAcceptEx = NULL;
+    GUID GuidAcceptEx = WSAID_ACCEPTEX;
+    WSAOVERLAPPED olOverlap;
+
+    SOCKET ListenSocket = INVALID_SOCKET;
+    SOCKET AcceptSocket = INVALID_SOCKET;
+    sockaddr_in service;
+    char lpOutputBuf[1024];
+    int outBufLen = 1024;
+    DWORD dwBytes;
+
+    hostent* thisHost;
+    char* ip;
+    u_short port;
+
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != NO_ERROR) {
+        wprintf(L"Error at WSAStartup\n");
+        return 1;
+    }
+
+    // Create a handle for the completion port
+    hCompPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
+    if (hCompPort == NULL) {
+        wprintf(L"CreateIoCompletionPort failed with error: %u\n",
+            GetLastError());
+        WSACleanup();
+        return 1;
+    }
+
+    // Create a listening socket
+    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (ListenSocket == INVALID_SOCKET) {
+        wprintf(L"Create of ListenSocket socket failed with error: %u\n",
+            WSAGetLastError());
+        WSACleanup();
+        return 1;
+    }
+
+    // Associate the listening socket with the completion port
+    CreateIoCompletionPort((HANDLE)ListenSocket, hCompPort, (u_long)0, 0);
+
+    //----------------------------------------
+    // Bind the listening socket to the local IP address
+    // and port 27015
+    port = 9000;
+
+    service.sin_family = AF_INET;
+    service.sin_addr.s_addr = htonl(INADDR_ANY);
+    service.sin_port = htons(port);
+
+    if (bind(ListenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
+        wprintf(L"bind failed with error: %u\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    //----------------------------------------
+    // Start listening on the listening socket
+    iResult = listen(ListenSocket, 100);
+    if (iResult == SOCKET_ERROR) {
+        wprintf(L"listen failed with error: %u\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    wprintf(L"Listening on address:%d\n", port);
+
+    // Load the AcceptEx function into memory using WSAIoctl.
+    // The WSAIoctl function is an extension of the ioctlsocket()
+    // function that can use overlapped I/O. The function's 3rd
+    // through 6th parameters are input and output buffers where
+    // we pass the pointer to our AcceptEx function. This is used
+    // so that we can call the AcceptEx function directly, rather
+    // than refer to the Mswsock.lib library.
+    iResult = WSAIoctl(ListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+        &GuidAcceptEx, sizeof(GuidAcceptEx),
+        &lpfnAcceptEx, sizeof(lpfnAcceptEx),
+        &dwBytes, NULL, NULL);
+    if (iResult == SOCKET_ERROR) {
+        wprintf(L"WSAIoctl failed with error: %u\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // Create an accepting socket
+    AcceptSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (AcceptSocket == INVALID_SOCKET) {
+        wprintf(L"Create accept socket failed with error: %u\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // Empty our overlapped structure and accept connections.
+    memset(&olOverlap, 0, sizeof(olOverlap));
+
+    bRetVal = lpfnAcceptEx(ListenSocket, AcceptSocket, lpOutputBuf,
+        outBufLen - ((sizeof(sockaddr_in) + 16) * 2),
+        sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
+        &dwBytes, &olOverlap);
+    if (bRetVal == FALSE) {
+        auto error_code = WSAGetLastError();
+        if (ERROR_IO_PENDING != error_code)
+        {
+            wprintf(L"AcceptEx failed with error: %u\n", error_code);
+            closesocket(AcceptSocket);
+            closesocket(ListenSocket);
+            WSACleanup();
+            return 1;
+        }
+    }
+
+    // Associate the accept socket with the completion port
+    hCompPort2 = CreateIoCompletionPort((HANDLE)AcceptSocket, hCompPort, (u_long)0, 0);
+    // hCompPort2 should be hCompPort if this succeeds
+    if (hCompPort2 == NULL) {
+        wprintf(L"CreateIoCompletionPort associate failed with error: %u\n",
+            GetLastError());
+        closesocket(AcceptSocket);
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // Continue on to use send, recv, TransmitFile(), etc.,.
+    //...
+
+    return 0;
 }
-
-// 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴
-// 프로그램 디버그: <F5> 키 또는 [디버그] > [디버깅 시작] 메뉴
-
-// 시작을 위한 팁: 
-//   1. [솔루션 탐색기] 창을 사용하여 파일을 추가/관리합니다.
-//   2. [팀 탐색기] 창을 사용하여 소스 제어에 연결합니다.
-//   3. [출력] 창을 사용하여 빌드 출력 및 기타 메시지를 확인합니다.
-//   4. [오류 목록] 창을 사용하여 오류를 봅니다.
-//   5. [프로젝트] > [새 항목 추가]로 이동하여 새 코드 파일을 만들거나, [프로젝트] > [기존 항목 추가]로 이동하여 기존 코드 파일을 프로젝트에 추가합니다.
-//   6. 나중에 이 프로젝트를 다시 열려면 [파일] > [열기] > [프로젝트]로 이동하고 .sln 파일을 선택합니다.
