@@ -1,6 +1,7 @@
 #include "IOCompletionPort_T.h"
 #include <iostream>
 #include <process.h>
+#include <tchar.h>
 
 unsigned int WINAPI CallWorkerThread(LPVOID p)
 {
@@ -44,7 +45,7 @@ bool IOCompletionPort_T::Initialize()
 		return false;
 	}
 
-	auto error_process = [&](TCHAR* error_msg)->bool {
+	auto error_process = [&](const TCHAR* error_msg)->bool {
 		std::cout << error_msg << std::endl;
 		if (INVALID_SOCKET != _listen_socket)
 		{
@@ -155,5 +156,37 @@ bool IOCompletionPort_T::CreaeteWorkerThread()
 
 void IOCompletionPort_T::WorkerThread()
 {
-	BOOL result;
+	BOOL iocp_result;
+	int recv_result;
+
+	DWORD recv_bytes;
+	DWORD send_bytes;
+
+	SOCKETINFO* completion_key;
+	SOCKETINFO* socket_info;
+
+	DWORD flags = 0;
+
+	while (_worker_thread)
+	{
+		iocp_result = GetQueuedCompletionStatus(_iocp_handle, &recv_bytes, (PULONG_PTR)&completion_key, (LPOVERLAPPED*)&socket_info, INFINITE);
+
+		if (0 != iocp_result)
+			continue;
+
+		if (0 == recv_bytes)
+		{
+			closesocket(socket_info->socket);
+			delete socket_info;
+			continue;
+		}
+
+		socket_info->data_buf.len = recv_bytes;
+
+		TCHAR buf[1024];
+		wsprintf(buf, _T("[INFO] 메세지 수신 - bytes : [%d]"), socket_info->data_buf.len);
+		std::cout << buf << std::endl;
+
+		if
+	}
 }
