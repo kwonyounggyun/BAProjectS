@@ -158,6 +158,7 @@ void IOCompletionPort_T::WorkerThread()
 {
 	BOOL iocp_result;
 	int recv_result;
+	int send_result;
 
 	DWORD recv_bytes;
 	DWORD send_bytes;
@@ -171,10 +172,7 @@ void IOCompletionPort_T::WorkerThread()
 	{
 		iocp_result = GetQueuedCompletionStatus(_iocp_handle, &recv_bytes, (PULONG_PTR)&completion_key, (LPOVERLAPPED*)&socket_info, INFINITE);
 
-		if (0 != iocp_result)
-			continue;
-
-		if (0 == recv_bytes)
+		if (false == iocp_result && 0 <= recv_bytes)
 		{
 			closesocket(socket_info->socket);
 			delete socket_info;
@@ -187,6 +185,29 @@ void IOCompletionPort_T::WorkerThread()
 		wsprintf(buf, _T("[INFO] 메세지 수신 - bytes : [%d]"), socket_info->data_buf.len);
 		std::cout << buf << std::endl;
 
-		if
+		send_result = WSASend(_socket_info->socket, &(_socket_info->data_buf), 1, &send_bytes, flags, NULL, NULL);
+
+		if (send_result == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+		{
+			std::cout << "[ERROR] WSASend 실패 : "  << WSAGetLastError() << std::endl;
+		}
+		else
+		{
+			std::cout << "[INFO] 메세지 송신 - bytes : " << send_bytes << WSAGetLastError() << std::endl;
+		}
+
+		ZeroMemory(&(_socket_info->overlapped), sizeof(OVERLAPPED));
+		_socket_info->data_buf.len = MAX_BUFFER;
+		_socket_info->data_buf.buf = _socket_info->message_buffer;
+		ZeroMemory(&(_socket_info->message_buffer), MAX_BUFFER);
+		_socket_info->recv_bytes = 0;
+		_socket_info->send_bytes = 0;
+
+		recv_result = WSARecv(_socket_info->socket, &(_socket_info->data_buf), 1, &recv_bytes, &flags, (LPWSAOVERLAPPED) & (_socket_info->overlapped), NULL);
+
+		if (recv_result == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+		{
+			std::cout << "[ERROR] WSARecv 실패 : " << WSAGetLastError() << std::endl;
+		}
 	}
 }

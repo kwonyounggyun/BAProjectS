@@ -9,153 +9,67 @@
 #include <ws2tcpip.h>
 #include <mswsock.h>
 #include <stdio.h>
+#include <iostream>
 
 // Need to link with Ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
 
+
 int main()
 {
-    //----------------------------------------
-    // Declare and initialize variables
-    WSADATA wsaData;
-    int iResult = 0;
-    BOOL bRetVal = FALSE;
+	WSADATA wsa_data;
+	int result;
+	result = WSAStartup(MAKEWORD(2, 2), &wsa_data);
 
-    HANDLE hCompPort;
-    HANDLE hCompPort2;
+	if (0 != result)
+	{
+		std::cout << "[ERROR] winsock 초기화 실패" << std::endl;
+		return false;
+	}
 
-    LPFN_ACCEPTEX lpfnAcceptEx = NULL;
-    GUID GuidAcceptEx = WSAID_ACCEPTEX;
-    WSAOVERLAPPED olOverlap;
+	SOCKET client = socket(PF_INET,  SOCK_STREAM, IPPROTO_TCP );
 
-    SOCKET ListenSocket = INVALID_SOCKET;
-    SOCKET AcceptSocket = INVALID_SOCKET;
-    sockaddr_in service;
-    char lpOutputBuf[1024];
-    int outBufLen = 1024;
-    DWORD dwBytes;
+	if (client == INVALID_SOCKET)
+	{
+		std::cout << "[ERROR] socket  실패" << std::endl;
+		return false;
+	}
 
-    hostent* thisHost;
-    char* ip;
-    u_short port;
+	SOCKADDR_IN socket_addr;
+	socket_addr.sin_family = AF_INET;
+	socket_addr.sin_port = htons(8000);
+	socket_addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != NO_ERROR) {
-        wprintf(L"Error at WSAStartup\n");
-        return 1;
-    }
+	if (SOCKET_ERROR == connect(client, (SOCKADDR*)&socket_addr, sizeof(SOCKADDR)))
+	{
+		std::cout << "[ERROR] connect  실패" << std::endl;
+		return false;
+	}
 
-    // Create a handle for the completion port
-    hCompPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
-    if (hCompPort == NULL) {
-        wprintf(L"CreateIoCompletionPort failed with error: %u\n",
-            GetLastError());
-        WSACleanup();
-        return 1;
-    }
+	int count = 0;
+	const char* test = "testttt";
 
-    // Create a listening socket
-    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (ListenSocket == INVALID_SOCKET) {
-        wprintf(L"Create of ListenSocket socket failed with error: %u\n",
-            WSAGetLastError());
-        WSACleanup();
-        return 1;
-    }
+	char buf[100];
+	while (count < 10)
+	{
+		if (send(client, test, strlen(test) + 1, 0) < 0)
+		{
+			std::cout << "[ERROR] send  실패" << std::endl;
+			continue;
+		}
+		Sleep(1000);
+		if (recv(client, buf, 100, 0) < 0)
+		{
+			std::cout << "[ERROR] recv  실패" << std::endl;
+			continue;
+		}
 
-    // Associate the listening socket with the completion port
-    CreateIoCompletionPort((HANDLE)ListenSocket, hCompPort, (u_long)0, 0);
+		std::cout << buf << std::endl;
+		count++;
+	}
 
-    //----------------------------------------
-    // Bind the listening socket to the local IP address
-    // and port 27015
-    port = 9000;
+	closesocket(client);
+	::WSACleanup();
 
-    service.sin_family = AF_INET;
-    service.sin_addr.s_addr = htonl(INADDR_ANY);
-    service.sin_port = htons(port);
-
-    if (bind(ListenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
-        wprintf(L"bind failed with error: %u\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    //----------------------------------------
-    // Start listening on the listening socket
-    iResult = listen(ListenSocket, 100);
-    if (iResult == SOCKET_ERROR) {
-        wprintf(L"listen failed with error: %u\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    wprintf(L"Listening on address:%d\n", port);
-
-    // Load the AcceptEx function into memory using WSAIoctl.
-    // The WSAIoctl function is an extension of the ioctlsocket()
-    // function that can use overlapped I/O. The function's 3rd
-    // through 6th parameters are input and output buffers where
-    // we pass the pointer to our AcceptEx function. This is used
-    // so that we can call the AcceptEx function directly, rather
-    // than refer to the Mswsock.lib library.
-    iResult = WSAIoctl(ListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
-        &GuidAcceptEx, sizeof(GuidAcceptEx),
-        &lpfnAcceptEx, sizeof(lpfnAcceptEx),
-        &dwBytes, NULL, NULL);
-    if (iResult == SOCKET_ERROR) {
-        wprintf(L"WSAIoctl failed with error: %u\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // Create an accepting socket
-    AcceptSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (AcceptSocket == INVALID_SOCKET) {
-        wprintf(L"Create accept socket failed with error: %u\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // Empty our overlapped structure and accept connections.
-    memset(&olOverlap, 0, sizeof(olOverlap));
-
-    bRetVal = lpfnAcceptEx(ListenSocket, AcceptSocket, lpOutputBuf,
-        outBufLen - ((sizeof(sockaddr_in) + 16) * 2),
-        sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
-        &dwBytes, &olOverlap);
-    if (bRetVal == FALSE) {
-        auto error_code = WSAGetLastError();
-        if (ERROR_IO_PENDING != error_code)
-        {
-            wprintf(L"AcceptEx failed with error: %u\n", error_code);
-            closesocket(AcceptSocket);
-            closesocket(ListenSocket);
-            WSACleanup();
-            return 1;
-        }
-    }
-
-    // Associate the accept socket with the completion port
-    hCompPort2 = CreateIoCompletionPort((HANDLE)AcceptSocket, hCompPort, (u_long)0, 0);
-    // hCompPort2 should be hCompPort if this succeeds
-    if (hCompPort2 == NULL) {
-        wprintf(L"CreateIoCompletionPort associate failed with error: %u\n",
-            GetLastError());
-        closesocket(AcceptSocket);
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    
-    // Continue on to use send, recv, TransmitFile(), etc.,.
-    //...
-
-    return 0;
+	return 0;
 }
