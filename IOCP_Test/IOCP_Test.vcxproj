@@ -116,6 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,10 +141,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IOCompletionPort_T.cpp" />
+    <ClCompile Include="IOCPNetwork.cpp" />
+    <ClCompile Include="IOCPSocket.cpp" />
     <ClCompile Include="IOCP_Test.cpp" />
+    <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOCompletionPort_T.h" />
+    <ClInclude Include="IOCPNetwork.h" />
+    <ClInclude Include="IOCPSocket.h" />
+    <ClInclude Include="NetworkInterface.h" />
+    <ClInclude Include="SocketManager.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

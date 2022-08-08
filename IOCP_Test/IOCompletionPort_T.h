@@ -1,9 +1,4 @@
 #pragma once
-#pragma comment(lib, "ws2_32.lib")
-#include <WinSock2.h>
-
-#define MAX_BUFFER  1024
-#define SERVER_PORT 8000
 
 struct SOCKETINFO
 {
