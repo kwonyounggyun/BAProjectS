@@ -140,17 +140,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BAOverlapped.cpp" />
+    <ClCompile Include="BAServerConfig.cpp" />
+    <ClCompile Include="BASocketManager.cpp" />
     <ClCompile Include="IOCompletionPort_T.cpp" />
     <ClCompile Include="IOCPNetwork.cpp" />
-    <ClCompile Include="IOCPSocket.cpp" />
+    <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="IOCP_Test.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BAOverlapped.h" />
+    <ClInclude Include="BAServerConfig.h" />
+    <ClInclude Include="BASocketManager.h" />
     <ClInclude Include="IOCompletionPort_T.h" />
     <ClInclude Include="IOCPNetwork.h" />
-    <ClInclude Include="IOCPSocket.h" />
-    <ClInclude Include="NetworkInterface.h" />
+    <ClInclude Include="BASocket.h" />
     <ClInclude Include="SocketManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Test.h" />
