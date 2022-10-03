@@ -9,7 +9,7 @@ class BAMemoryPool
 private:
 	static unsigned char* m_free_ptr;
 	static bool m_fix;
-	BACS cs;
+	static BACS cs;
 
 public:
 	static void* operator new(size_t size)

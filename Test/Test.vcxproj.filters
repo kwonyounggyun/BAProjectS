@@ -21,6 +21,9 @@
     <ClCompile Include="BACriticalSection.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="BAOverlapped.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BACircularQueue.h">
@@ -30,6 +33,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BAMemoryPool.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ISocket.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="IOverlapped.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BAOverlapped.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
