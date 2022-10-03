@@ -140,12 +140,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BACriticalSection.cpp" />
+    <ClCompile Include="BAOverlapped.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BACircularQueue.h" />
     <ClInclude Include="BACriticalSection.h" />
     <ClInclude Include="BAMemoryPool.h" />
+    <ClInclude Include="BAOverlapped.h" />
+    <ClInclude Include="IOverlapped.h" />
+    <ClInclude Include="ISocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

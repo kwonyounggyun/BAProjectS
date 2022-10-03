@@ -38,9 +38,85 @@ public:
         strncpy_s(string, cpy.string, 200);
     }
 };
+
+
+#include <unordered_map>
+#include <random>
+struct Test
+{
+    Test(int i, int j) :idx(i), job(j) {};
+    int idx;
+    int job;
+
+
+};
+
+std::ostream& operator << (std::ostream& out, Test t)
+{
+    out << "[" << t.idx << "," << t.job << "]";
+    return out;
+}
+
+class Queue 
+{
+    using Smart_Lock = BASmartCriticalSection;
+private:
+    BACriticalSection cs;
+    std::unordered_multimap<int, Test> map_by_id;
+    std::unordered_multimap<int, Test>::const_iterator cur_iter;
+
+public:
+    void Push(int idx, Test&& t)
+    {
+        auto lock = Smart_Lock(&cs);
+        map_by_id.insert(std::make_pair(idx, t));
+    }
+
+    std::pair<int, Test>& Pop()
+    {
+        auto lock = Smart_Lock(&cs);
+        auto range = map_by_id.equal_range(cur_iter->first);
+    }
+};
+
+bool state = 1;
+void __stdcall ThreadDoWork(void* p)
+{
+    while (state)
+    {
+
+    }
+}
+
 int main()
 {
-    std::queue<TT*> q;
+    
+
+    // 시드값을 얻기 위한 random_device 생성.
+    std::random_device rd;
+
+    // random_device 를 통해 난수 생성 엔진을 초기화 한다.
+    std::mt19937 gen(rd());
+
+    // 0 부터 99 까지 균등하게 나타나는 난수열을 생성하기 위해 균등 분포 정의.
+    std::uniform_int_distribution<int> dis(0, 99);
+
+    std::uniform_int_distribution<int> dis2(0, 10000);
+
+    for (int i = 0; i < 100; i++)
+    {
+        map_by_id.insert(std::make_pair(dis(gen), Test(dis2(gen), dis2(gen))));
+    }
+
+    for (auto iter = map_by_id.begin(); iter != map_by_id.end(); iter++)
+    {
+        std::cout << iter->first << iter->second << std::endl;
+    }
+
+
+
+
+ /*   std::queue<TT*> q;
 
     std::cout <<std::endl;
     bool pop = false;
@@ -73,7 +149,7 @@ int main()
     }
 
     getchar();
-    std::cout << "Hello World!\n";
+    std::cout << "Hello World!\n";*/
 }
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴
