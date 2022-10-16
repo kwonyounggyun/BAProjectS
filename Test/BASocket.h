@@ -3,6 +3,7 @@
 class BASocket : ISocket
 {
 private:
+	friend class BANetworkManager;
 	SOCKET _socket;
 public:
 	// ISocket을(를) 통해 상속됨

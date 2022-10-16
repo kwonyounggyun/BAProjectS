@@ -1,1 +1,7 @@
 https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=lsm_origin&logNo=221242443774
+
+IOCP 사용시에는 소켓 생성시 WSASocket 함수가 아닌 socket으로 생성해야한다.
+IOCP등록 하려면 socket으로 생성된 소켓만 가능
+
+여기에 IOCP 사용 예제
+https://learn.microsoft.com/ko-kr/windows/win32/api/mswsock/nf-mswsock-acceptex
