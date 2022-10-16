@@ -116,6 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,8 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BACriticalSection.cpp" />
-    <ClCompile Include="BAOverlapped.cpp" />
+    <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -148,8 +148,9 @@
     <ClInclude Include="BACriticalSection.h" />
     <ClInclude Include="BAMemoryPool.h" />
     <ClInclude Include="BAOverlapped.h" />
-    <ClInclude Include="IOverlapped.h" />
+    <ClInclude Include="BASocket.h" />
     <ClInclude Include="ISocket.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

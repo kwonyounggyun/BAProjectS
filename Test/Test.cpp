@@ -1,6 +1,6 @@
 ﻿// Test.cpp : 이 파일에는 'main' 함수가 포함됩니다. 거기서 프로그램 실행이 시작되고 종료됩니다.
 //
-
+#include "stdafx.h"
 #include <iostream>
 #include <queue>
 #include "BAMemoryPool.h"
@@ -92,26 +92,26 @@ int main()
 {
     
 
-    // 시드값을 얻기 위한 random_device 생성.
-    std::random_device rd;
+    //// 시드값을 얻기 위한 random_device 생성.
+    //std::random_device rd;
 
-    // random_device 를 통해 난수 생성 엔진을 초기화 한다.
-    std::mt19937 gen(rd());
+    //// random_device 를 통해 난수 생성 엔진을 초기화 한다.
+    //std::mt19937 gen(rd());
 
-    // 0 부터 99 까지 균등하게 나타나는 난수열을 생성하기 위해 균등 분포 정의.
-    std::uniform_int_distribution<int> dis(0, 99);
+    //// 0 부터 99 까지 균등하게 나타나는 난수열을 생성하기 위해 균등 분포 정의.
+    //std::uniform_int_distribution<int> dis(0, 99);
 
-    std::uniform_int_distribution<int> dis2(0, 10000);
+    //std::uniform_int_distribution<int> dis2(0, 10000);
 
-    for (int i = 0; i < 100; i++)
-    {
-        map_by_id.insert(std::make_pair(dis(gen), Test(dis2(gen), dis2(gen))));
-    }
+    //for (int i = 0; i < 100; i++)
+    //{
+    //    map_by_id.insert(std::make_pair(dis(gen), Test(dis2(gen), dis2(gen))));
+    //}
 
-    for (auto iter = map_by_id.begin(); iter != map_by_id.end(); iter++)
-    {
-        std::cout << iter->first << iter->second << std::endl;
-    }
+    //for (auto iter = map_by_id.begin(); iter != map_by_id.end(); iter++)
+    //{
+    //    std::cout << iter->first << iter->second << std::endl;
+    //}
 
 
 

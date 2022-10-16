@@ -1,11 +1,10 @@
 #pragma once
 #include <Windows.h>
-#include "IOverlapped.h"
 
 class ISocket
 {
-	SOCKET _socket;
-
-	void Read();
-	void Write(IOverlapped* overlapped );
+public:
+	virtual void Accept() = 0;
+	virtual void Read() = 0;
+	virtual void Write(void* msg, int size) = 0;
 };

@@ -18,10 +18,7 @@
     <ClCompile Include="Test.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BACriticalSection.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BAOverlapped.cpp">
+    <ClCompile Include="BASocket.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,10 +35,13 @@
     <ClInclude Include="ISocket.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="IOverlapped.h">
+    <ClInclude Include="BAOverlapped.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BAOverlapped.h">
+    <ClInclude Include="BASocket.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

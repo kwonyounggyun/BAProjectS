@@ -38,6 +38,7 @@ private:
 	BACriticalSection* cs;
 
 public:
+
 	BASmartCriticalSection(BACriticalSection* bacs) : cs(nullptr)
 	{
 		if (bacs != nullptr)

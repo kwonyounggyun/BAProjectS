@@ -1,6 +1,4 @@
 #pragma once
-#include <Windows.h>
-#include "BACriticalSection.h"
 
 //메모리 풀은 클래스 단위다.
 template<typename T, int POOL_SIZE = 100, bool FIX_SIZE = false>
@@ -14,7 +12,7 @@ private:
 public:
 	static void* operator new(size_t size)
 	{
-		BASmartCS(&cs);
+		auto lock = BASmartCS(&cs);
 		if (m_free_ptr == nullptr && m_fix == false)
 			Alloc();
 		else if (m_free_ptr == nullptr && m_fix == true)
@@ -27,7 +25,7 @@ public:
 
 	static void operator delete(void* ptr) noexcept
 	{
-		BASmartCS(&cs);
+		auto lock = BASmartCS(&cs);
 		memset(ptr, 0x00, sizeof(T));
 		*reinterpret_cast<unsigned char**>(ptr) = m_free_ptr;
 		m_free_ptr = reinterpret_cast<unsigned char*>(ptr);

@@ -1,18 +1,19 @@
 #pragma once
-#include "IOverlapped.h"
-#include "BAMemoryPool.h"
 
-class BARead:public IOverlapped, BAMemoryPool<BARead>
+struct BAReadOverlapped:public OVERLAPPED, public BAMemoryPool<BAReadOverlapped>
 {
-
+	WSABUF _wsa_buf;
+	char _buf[MAX_PACKET_SIZE];
 };
 
-class BAWrite :public IOverlapped, BAMemoryPool<BAWrite>
+struct BAWriteOverlapped: public OVERLAPPED, public  BAMemoryPool<BAWriteOverlapped>
 {
-
+	WSABUF _wsa_buf;
+	char _buf[MAX_PACKET_SIZE];
 };
 
-class BAAccept :public IOverlapped, BAMemoryPool<BAAccept>
+struct BAAcceptOverlapped :public OVERLAPPED, public  BAMemoryPool<BAAcceptOverlapped>
 {
-
+	WSABUF _wsa_buf;
+	char _buf[MAX_PACKET_SIZE];
 };
