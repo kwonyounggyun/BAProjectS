@@ -1,19 +1,35 @@
 #pragma once
+//
+//struct BAReadOverlapped:public OVERLAPPED, public BAMemoryPool<BAReadOverlapped>
+//{
+//	WSABUF _wsa_buf;
+//	char _buf[MAX_PACKET_SIZE];
+//};
+//
+//struct BAWriteOverlapped: public OVERLAPPED, public  BAMemoryPool<BAWriteOverlapped>
+//{
+//	WSABUF _wsa_buf;
+//	char _buf[MAX_PACKET_SIZE];
+//};
+//
+//struct BAAcceptOverlapped :public OVERLAPPED, public  BAMemoryPool<BAAcceptOverlapped>
+//{
+//	WSABUF _wsa_buf;
+//	char _buf[MAX_PACKET_SIZE];
+//};
+//
 
-struct BAReadOverlapped:public OVERLAPPED, public BAMemoryPool<BAReadOverlapped>
+enum class OverlappedType
 {
-	WSABUF _wsa_buf;
-	char _buf[MAX_PACKET_SIZE];
+	READ = 0,
+	WRITE = 1,
+	ACCEPT = 2,
+	CLOSE = 3
 };
 
-struct BAWriteOverlapped: public OVERLAPPED, public  BAMemoryPool<BAWriteOverlapped>
+struct BAOverlapped : public OVERLAPPED, public  BAMemoryPool<BAOverlapped>
 {
-	WSABUF _wsa_buf;
-	char _buf[MAX_PACKET_SIZE];
-};
-
-struct BAAcceptOverlapped :public OVERLAPPED, public  BAMemoryPool<BAAcceptOverlapped>
-{
+	OverlappedType type;
 	WSABUF _wsa_buf;
 	char _buf[MAX_PACKET_SIZE];
 };

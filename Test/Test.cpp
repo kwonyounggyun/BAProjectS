@@ -8,5 +8,7 @@
 
 int main()
 {
+	BAOverlapped<OverlappedType::ACCEPT> t;
 
+	std::cout << (int)t.GetType() << std::endl;
 }

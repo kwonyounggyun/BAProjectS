@@ -17,9 +17,9 @@
 #include "INetworkManager.h"
 #include "Log.h"
 
-#include "BANetworkManager.h"
 #include "BACircularQueue.h"
 #include "BACriticalSection.h"
 #include "BAMemoryPool.h"
 #include "BAOverlapped.h"
 #include "BASocket.h"
+#include "BANetworkManager.h"
