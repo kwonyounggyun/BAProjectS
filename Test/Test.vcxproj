@@ -140,11 +140,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BABufferContainer.cpp" />
     <ClCompile Include="BANetworkManager.cpp" />
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BABufferContainer.h" />
     <ClInclude Include="BACircularQueue.h" />
     <ClInclude Include="BACriticalSection.h" />
     <ClInclude Include="BAMemoryPool.h" />
