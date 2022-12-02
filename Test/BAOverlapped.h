@@ -27,9 +27,9 @@ enum class OverlappedType
 	CLOSE = 3
 };
 
+//이게 버퍼를 가지면안된다...
 struct BAOverlapped : public OVERLAPPED, public  BAMemoryPool<BAOverlapped>
 {
 	OverlappedType type;
 	WSABUF _wsa_buf;
-	char _buf[MAX_PACKET_SIZE];
 };

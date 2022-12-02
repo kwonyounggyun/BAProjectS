@@ -104,9 +104,11 @@ void BANetworkManager::Loop()
 		DWORD trans_byte;
 		ULONG_PTR completion_key;
 		BAOverlapped* overlapped;
+
 		if (false == GetQueuedCompletionStatus(_iocp_handle, &trans_byte, &completion_key, (LPOVERLAPPED*) &overlapped, INFINITE))
 		{
-
+			ErrorLog("GetQueuedCompletionStatus Failed");
+			continue;
 		}
 
 		BASocket* socket = (BASocket*)completion_key;
@@ -118,9 +120,10 @@ void BANetworkManager::Loop()
 		case OverlappedType::CLOSE:
 			break;
 		case OverlappedType::READ:
-			//여기서 소켓 정보랑 메세지 생성 후 넘김.
+			socket->Read();
 			break;
 		case OverlappedType::WRITE:
+			socket->Write();
 			break;
 		}
 	}
@@ -129,5 +132,5 @@ void BANetworkManager::Loop()
 void __stdcall WorkThread(void* p)
 {
 	BANetworkManager* network = static_cast<BANetworkManager*>(p);
-	
+	network->Loop();
 }

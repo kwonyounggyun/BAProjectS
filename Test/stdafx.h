@@ -17,6 +17,11 @@
 #include "INetworkManager.h"
 #include "Log.h"
 
+/*BABufferContainer 에서 사용*/
+#define MAX_UNIT_BUFFER_SIZE MAX_PACKET_SIZE * 100
+#define MAX_USER 4000
+#include "BABufferContainer.h"
+
 #include "BACircularQueue.h"
 #include "BACriticalSection.h"
 #include "BAMemoryPool.h"

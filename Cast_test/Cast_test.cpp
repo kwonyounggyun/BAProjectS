@@ -125,6 +125,17 @@ int main()
         dynamic_cast<SmartStudent*>(vec_st[index])->Smartwork();
     }
     std::cout << "cast speed test(dynamic_cast)" << GetTickCount64() - tick << std::endl;
+    
+    tick = GetTickCount64();
+    for (int i = 0; i < 10000000; i++)
+    {
+        int index = i % size;
+        if (typeid(*vec_st[index]) == typeid(SmartStudent))
+        {
+            static_cast<SmartStudent*>(vec_st[index])->Smartwork();
+        }
+    }
+    std::cout << "cast speed test(type_id)" << GetTickCount64() - tick << std::endl;
 
     tick = GetTickCount64();
     for (int i = 0; i < 10000000; i++)
@@ -135,8 +146,8 @@ int main()
     std::cout << "cast speed test(static_cast)" << GetTickCount64() - tick << std::endl;
 
     std::vector<BaseStudent*> vec_st2;
-    vec_st2.reserve(1000);
-    for (int i = 0; i < 1000; i++)
+    vec_st2.reserve(10000000);
+    for (int i = 0; i < 10000000; i++)
     {
         int random = rand() % 3;
         switch (random)
@@ -161,6 +172,16 @@ int main()
     for (int i = 0; i < 10000000; i++)
     {
         int index = i % size2;
+        if (typeid(*vec_st2[index])==typeid(SmartStudent))
+            static_cast<SmartStudent*>(vec_st2[index])->Smartwork();
+    }
+
+    std::cout << "TypeCheck version cast speed test(typeid)" << GetTickCount64() - tick << std::endl;
+
+    tick = GetTickCount64();
+    for (int i = 0; i < 10000000; i++)
+    {
+        int index = i % size2;
         auto student = dynamic_cast<SmartStudent*>(vec_st2[index]);
         if (student == nullptr)
             continue;
@@ -177,19 +198,18 @@ int main()
     }
     std::cout << "TypeCheck version cast speed test(static_cast)" << GetTickCount64() - tick << std::endl;
 
-    for (auto iter = vec_st.begin(); iter != vec_st.end();)
+    for (auto iter = vec_st.begin(); iter != vec_st.end();iter++)
     {
-        auto ptr = *iter;
-        iter = vec_st.erase(iter);
-        delete ptr;
+        delete *iter;
     }
+    vec_st.clear();
 
-    for (auto iter = vec_st2.begin(); iter != vec_st2.end();)
+    for (auto iter = vec_st2.begin(); iter != vec_st2.end();iter++)
     {
-        auto ptr = *iter;
-        iter = vec_st2.erase(iter);
-        delete ptr;
+        delete *iter;
     }
+    vec_st2.clear();
+
     std::cout << "nomal : " << nomal << std::endl;
     std::cout << "super  : " << super << std::endl;
     std::cout << "smart  : " << smart << std::endl;
