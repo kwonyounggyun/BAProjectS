@@ -1,24 +1,6 @@
 #pragma once
-//
-//struct BAReadOverlapped:public OVERLAPPED, public BAMemoryPool<BAReadOverlapped>
-//{
-//	WSABUF _wsa_buf;
-//	char _buf[MAX_PACKET_SIZE];
-//};
-//
-//struct BAWriteOverlapped: public OVERLAPPED, public  BAMemoryPool<BAWriteOverlapped>
-//{
-//	WSABUF _wsa_buf;
-//	char _buf[MAX_PACKET_SIZE];
-//};
-//
-//struct BAAcceptOverlapped :public OVERLAPPED, public  BAMemoryPool<BAAcceptOverlapped>
-//{
-//	WSABUF _wsa_buf;
-//	char _buf[MAX_PACKET_SIZE];
-//};
-//
 
+class BASocket;
 enum class OverlappedType
 {
 	READ = 0,
@@ -27,9 +9,39 @@ enum class OverlappedType
 	CLOSE = 3
 };
 
-//이게 버퍼를 가지면안된다...
-struct BAOverlapped : public OVERLAPPED, public  BAMemoryPool<BAOverlapped>
+struct BAOverlapped : public OVERLAPPED
 {
-	OverlappedType type;
+	OverlappedType _type;
 	WSABUF _wsa_buf;
+	DWORD _trans_byte;
+	BAOverlapped(OverlappedType type) : _type(type), _trans_byte(0) 
+	{
+		_wsa_buf.buf = nullptr;
+		_wsa_buf.len = 0;
+
+		//OVERLAPPED 부분을 초기화하지 않으면 Accept시 실패한다.
+		memset(this, 0, sizeof(OVERLAPPED));
+	}
+};
+
+struct BAReadOverlapped:public BAOverlapped, public BAMemoryPool<BAReadOverlapped>
+{
+	BAReadOverlapped() : BAOverlapped(OverlappedType::READ) {}
+};
+
+struct BAWriteOverlapped: public BAOverlapped, public  BAMemoryPool<BAWriteOverlapped>
+{
+	BAWriteOverlapped() : BAOverlapped(OverlappedType::WRITE) {}
+};
+
+struct BAAcceptOverlapped :public BAOverlapped, public  BAMemoryPool<BAAcceptOverlapped>
+{
+	BASocket* _client;
+	char _buf[MAX_PACKET_SIZE + 64];
+	BAAcceptOverlapped() : BAOverlapped(OverlappedType::ACCEPT), _client(nullptr)
+	{
+		_wsa_buf.buf = _buf;
+		_wsa_buf.len = MAX_PACKET_SIZE;
+		ZeroMemory(_buf, sizeof(_buf));
+	}
 };

@@ -3,6 +3,7 @@
 #define MAX_BUFFER_LENGTH 1024
 
 #define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, _T(data), __VA_ARGS__)
+#define InfoLog(data, ...) CLog::WriteLog(LogType::Info, _T(data), __VA_ARGS__)
 
 class LogType
 {

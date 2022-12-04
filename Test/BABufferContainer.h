@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-struct BABufferUnit : public BAMemoryPool<BABufferUnit, MAX_USER * 2>
+struct BABufferUnit
 {
 public:
     BABufferUnit() :_capacity(sizeof(_buf)), _head(0), _tail(0) {}
@@ -17,7 +17,7 @@ public:
     int GetReadableSize() { return _tail - _head; }
 };
 
-struct BABufferUnitNode
+struct BABufferUnitNode : public BAMemoryPool<BABufferUnitNode, MAX_INIT_BUFFER_UNIT>
 {
 public:
     BABufferUnitNode() :_next(nullptr)
@@ -31,6 +31,8 @@ public:
 
     std::shared_ptr<BABufferUnitNode> _next;
     BABufferUnit _buffer;
+
+    void GetRemainBufInfo(__out char** buf, __out unsigned long& size);
 };
 
 class BABufferContainer
@@ -42,9 +44,11 @@ public:
     }
 
     int Write(char* buf, int len);
+    void Write(const std::shared_ptr<BABufferUnitNode>& buffer_unit);
     int Read(char* buf, int len);
     bool Peek(char* buf, int len);
     bool CheckReadableSize(int size);
+    std::shared_ptr<BABufferUnitNode>& GetTail() { return _tail; }
 
 private:
     std::shared_ptr<BABufferUnitNode> _head;

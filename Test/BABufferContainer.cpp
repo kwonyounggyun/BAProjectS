@@ -59,6 +59,12 @@ int BABufferContainer::Write(char* buf, int len)
     return len;
 }
 
+void BABufferContainer::Write(const std::shared_ptr<BABufferUnitNode>& buffer_unit)
+{
+    _tail->_next = buffer_unit;
+    _tail = buffer_unit;
+}
+
 int BABufferContainer::Read(char* buf, int len)
 {
     //쓰려는 버퍼 크기보다 쓰여진 크기가 작으면 실패
@@ -127,4 +133,10 @@ bool BABufferContainer::CheckReadableSize(int size)
     } while (node != nullptr);
 
     return false;
+}
+
+void BABufferUnitNode::GetRemainBufInfo(__out char** buf, __out unsigned long& size)
+{
+    *buf = _buffer._buf + _buffer._tail;
+    size = _buffer.GetWriteableSize();
 }
