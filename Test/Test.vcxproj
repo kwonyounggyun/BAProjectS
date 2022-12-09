@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BABufferContainer.cpp" />
+    <ClCompile Include="BANetworkBuffer.cpp" />
     <ClCompile Include="BANetworkManager.cpp" />
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="Test.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="BACircularQueue.h" />
     <ClInclude Include="BACriticalSection.h" />
     <ClInclude Include="BAMemoryPool.h" />
+    <ClInclude Include="BANetworkBuffer.h" />
     <ClInclude Include="BANetworkManager.h" />
     <ClInclude Include="BAOverlapped.h" />
     <ClInclude Include="BASocket.h" />

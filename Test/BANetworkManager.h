@@ -6,7 +6,7 @@ class BANetworkManager : public INetworkManager
 private:
 	BASocket _listen_socket;
 	std::vector<BASocket*> _client_sockets;
-	std::vector<std::thread*> _threads;
+	std::vector<std::shared_ptr<std::thread>> _threads;
 
 	HANDLE _iocp_handle;
 

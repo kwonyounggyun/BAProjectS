@@ -5,16 +5,20 @@ struct BABufferUnit
 {
 public:
     BABufferUnit() :_capacity(sizeof(_buf)), _head(0), _tail(0) {}
-    char _buf[MAX_UNIT_BUFFER_SIZE];
-    int _capacity;
-    int _head;
-    int _tail;
 
-    int Write(char* buf, int size);
-    int Read(char* buf, int size);
-    bool Peek(char* buf, int size);
-    int GetWriteableSize() { return _capacity - _tail; }
-    int GetReadableSize() { return _tail - _head; }
+    INT32 Write(UINT8* buf, INT32 size);
+    INT32 Read(UINT8* buf, INT32 size);
+    BOOL Peek(UINT8* buf, INT32 size);
+    INT32 GetWriteableSize() { return _capacity - _tail; }
+    INT32 GetReadableSize() { return _tail - _head; }
+    const UINT8* GetWritePosition() { return &_buf[_tail]; }
+    const UINT8* GetReadPosition() { return &_buf[_head]; }
+
+private:
+    UINT8 _buf[MAX_UNIT_BUFFER_SIZE + 1];
+    INT32 _capacity;
+    INT32 _head;
+    INT32 _tail;
 };
 
 struct BABufferUnitNode : public BAMemoryPool<BABufferUnitNode, MAX_INIT_BUFFER_UNIT>
@@ -31,8 +35,6 @@ public:
 
     std::shared_ptr<BABufferUnitNode> _next;
     BABufferUnit _buffer;
-
-    void GetRemainBufInfo(__out char** buf, __out unsigned long& size);
 };
 
 class BABufferContainer
@@ -40,17 +42,18 @@ class BABufferContainer
 public:
     BABufferContainer()
     {
-        _head = _tail = std::make_shared<BABufferUnitNode>();
+        _cur_read = _cur_write = _tail = std::make_shared<BABufferUnitNode>();
     }
 
-    int Write(char* buf, int len);
-    void Write(const std::shared_ptr<BABufferUnitNode>& buffer_unit);
-    int Read(char* buf, int len);
-    bool Peek(char* buf, int len);
-    bool CheckReadableSize(int size);
-    std::shared_ptr<BABufferUnitNode>& GetTail() { return _tail; }
+    INT32 Write(UINT8* buf, INT32 len);
+    INT32 Read(UINT8* buf, INT32 len);
+    BOOL Peek(UINT8* buf, INT32 len);
+    BOOL CheckReadableSize(INT32 len);
+    BOOL Reserve(INT32 length);
+    BOOL PushNode();
 
-private:
-    std::shared_ptr<BABufferUnitNode> _head;
+protected:
+    std::shared_ptr<BABufferUnitNode> _cur_read;
+    std::shared_ptr<BABufferUnitNode> _cur_write;
     std::shared_ptr<BABufferUnitNode> _tail;
 };

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "BABufferContainer.h"
 
-int BABufferUnit::Write(char* buf, int size)
+INT32 BABufferUnit::Write(UINT8* buf, INT32 size)
 {
 #if defined(_DEBUG)
 	if (GetWriteableSize() < size)
@@ -14,7 +14,7 @@ int BABufferUnit::Write(char* buf, int size)
 	return size;
 }
 
-int BABufferUnit::Read(char* buf, int size)
+INT32 BABufferUnit::Read(UINT8* buf, INT32 size)
 {
 	if (false == Peek(buf, size))
 		return -1;
@@ -24,7 +24,7 @@ int BABufferUnit::Read(char* buf, int size)
 	return size;
 }
 
-bool BABufferUnit::Peek(char* buf, int size)
+BOOL BABufferUnit::Peek(UINT8* buf, INT32 size)
 {
 #if defined(_DEBUG)
 	if (GetReadableSize() < size)
@@ -36,36 +36,34 @@ bool BABufferUnit::Peek(char* buf, int size)
 	return true;
 }
 
-int BABufferContainer::Write(char* buf, int len)
+INT32 BABufferContainer::Write(UINT8* buf, INT32 len)
 {
-    int remain = len;
+    INT32 remain = len;
     do
     {
-        int tail_remain_buf_size = _tail->_buffer.GetWriteableSize();
+        INT32 tail_remain_buf_size = _cur_write->_buffer.GetWriteableSize();
 
         if (tail_remain_buf_size <= remain)
         {
-            remain -= _tail->_buffer.Write(buf + len - remain, tail_remain_buf_size);
-            std::shared_ptr<BABufferUnitNode> new_node = std::make_shared<BABufferUnitNode>();
-            _tail->_next = new_node;
-            _tail = new_node;
+            remain -= _cur_write->_buffer.Write((UINT8*)(buf) + len - remain, tail_remain_buf_size);
+
+            if (_cur_write->_next == nullptr)
+            {
+                PushNode();
+            }
+
+            _cur_write = _cur_write->_next;
         }
         else
         {
-            remain -= _tail->_buffer.Write(buf + len - remain, remain);
+            remain -= _cur_write->_buffer.Write(buf + len - remain, remain);
         }
     } while (remain > 0);
 
     return len;
 }
 
-void BABufferContainer::Write(const std::shared_ptr<BABufferUnitNode>& buffer_unit)
-{
-    _tail->_next = buffer_unit;
-    _tail = buffer_unit;
-}
-
-int BABufferContainer::Read(char* buf, int len)
+INT32 BABufferContainer::Read(UINT8* buf, INT32 len)
 {
     //쓰려는 버퍼 크기보다 쓰여진 크기가 작으면 실패
     if (false == CheckReadableSize(len))
@@ -75,28 +73,28 @@ int BABufferContainer::Read(char* buf, int len)
     int remain = len;
     do
     {
-        int head_remain_read_size = _head->_buffer.GetReadableSize();
+        int head_remain_read_size = _cur_read->_buffer.GetReadableSize();
 
         if (head_remain_read_size <= remain)
         {
-            remain -= _head->_buffer.Read(buf + len - remain, head_remain_read_size);
-            _head = _head->_next;
+            remain -= _cur_read->_buffer.Read(buf + len - remain, head_remain_read_size);
+            _cur_read = _cur_read->_next;
         }
         else
         {
-            remain -= _head->_buffer.Read(buf + len - remain, remain);
+            remain -= _cur_read->_buffer.Read(buf + len - remain, remain);
         }
     } while (remain > 0);
 
     return len;
 }
 
-bool BABufferContainer::Peek(char* buf, int len)
+BOOL BABufferContainer::Peek(UINT8* buf, INT32 len)
 {
     if (false == CheckReadableSize(len))
         return false;
 
-    std::shared_ptr<BABufferUnitNode> node = _head;
+    std::shared_ptr<BABufferUnitNode> node = _cur_read;
     int remain = len;
     do
     {
@@ -118,25 +116,49 @@ bool BABufferContainer::Peek(char* buf, int len)
     return true;
 }
 
-bool BABufferContainer::CheckReadableSize(int size)
+BOOL BABufferContainer::CheckReadableSize(INT32 len)
 {
-    std::shared_ptr<BABufferUnitNode> node = _head;
+    std::shared_ptr<BABufferUnitNode> node = _cur_read;
     int readable_size = 0;
-    do
+    while (node != _cur_write)
     {
         readable_size += node->_buffer.GetReadableSize();
-
-        if (readable_size >= size)
+        if (readable_size >= len)
             return true;
 
         node = node->_next;
-    } while (node != nullptr);
+    }
+
+    readable_size += node->_buffer.GetReadableSize();
+    if (readable_size >= len)
+        return true;
 
     return false;
 }
 
-void BABufferUnitNode::GetRemainBufInfo(__out char** buf, __out unsigned long& size)
+BOOL BABufferContainer::Reserve(INT32 length)
 {
-    *buf = _buffer._buf + _buffer._tail;
-    size = _buffer.GetWriteableSize();
+    INT32 remain = length;
+    remain -= _cur_write->_buffer.GetWriteableSize();
+
+    auto node = _cur_write;
+    while (remain > 0)
+    {
+        if (node->_next == nullptr)
+            PushNode();
+
+        node = node->_next;
+        remain -= node->_buffer.GetWriteableSize();
+    }
+
+    return true;
 }
+
+BOOL BABufferContainer::PushNode()
+{
+    _tail->_next = std::shared_ptr<BABufferUnitNode>();
+    _tail = _tail->_next;
+
+    return TRUE;
+}
+

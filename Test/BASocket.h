@@ -4,9 +4,9 @@ class BASocket : ISocket
 {
 private:
 	SOCKET _socket;
-	BABufferContainer _read_buf;
-	BABufferContainer _write_buf;
-	char _recv_buf[4000];
+	BABufferContainer _recv_buf;
+	BABufferContainer _send_buf;
+	//char _recv_buf[4000];
 	
 public:
 	BASocket();
@@ -17,9 +17,13 @@ public:
 
 	// ISocket을(를) 통해 상속됨
 	virtual void Accept() override;
-	virtual void Read() override;
-	virtual void Write(void* msg, int size) override;
+	virtual void Recv(std::shared_ptr<BABufferUnitNode>& node) override;
+	virtual void Send(void* msg, int size) override;
 
 	void Close();
 	bool InitSocket();
+
+	// ISocket을(를) 통해 상속됨
+	virtual void Read() override;
+	virtual void Write(void* msg, int size) override;
 };

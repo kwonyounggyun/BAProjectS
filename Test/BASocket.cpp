@@ -42,13 +42,14 @@ void BASocket::Accept()
 {
 }
 
-void BASocket::Read()
+void BASocket::Recv(std::shared_ptr<BABufferUnitNode>& node)
 {
-	
+	_recv_buf.Write(node);
 }
 
-void BASocket::Write(void* msg, int size)
+void BASocket::Send(void* msg, int size)
 {
+	
 }
 
 void BASocket::Close()
@@ -71,4 +72,14 @@ bool BASocket::InitSocket()
 	}
 
 	return true;
+}
+
+void BASocket::Read()
+{
+
+}
+
+void BASocket::Write(void* msg, int size)
+{
+	_send_buf.Write((char*)msg, size);
 }
