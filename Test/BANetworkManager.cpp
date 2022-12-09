@@ -76,23 +76,7 @@ void BANetworkManager::StartNetwork()
 			return;
 		}
 
-		BAAcceptOverlapped* overlapped = new BAAcceptOverlapped();
-		overlapped->_node = std::make_shared<BABufferUnitNode>();
-		overlapped->_client = client_socket;
-
-		if(false == _lpfn_acceptEx(_listen_socket.GetSocket(), client_socket->GetSocket(), overlapped->_node->_buffer._buf,
-			0,
-			sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
-			&overlapped->_trans_byte, (LPOVERLAPPED)overlapped))
-		{
-			int error_code = WSAGetLastError();
-			if (ERROR_IO_PENDING != error_code)
-			{
-				wprintf(L"AcceptEx failed with error: %u\n", error_code);
-				client_socket->Close();
-				return;
-			}
-		}
+		client_socket->Accept(_listen_socket.GetSocket(), _lpfn_acceptEx);
 
 		_iocp_handle = CreateIoCompletionPort((HANDLE)client_socket->GetSocket(), _iocp_handle, (ULONG_PTR)client_socket, 0);
 
@@ -129,7 +113,7 @@ void BANetworkManager::Loop()
 		}
 
 
-		switch (overlapped->_type)
+		/*switch (overlapped->_type)
 		{
 		case OverlappedType::ACCEPT:
 			{
@@ -207,6 +191,6 @@ void BANetworkManager::Loop()
 				client->Recv();
 			}
 			break;
-		}
+		}*/
 	}
 }

@@ -13,7 +13,6 @@ struct BAOverlapped : public OVERLAPPED
 {
 	OverlappedType _type;
 	DWORD _trans_byte;
-	std::shared_ptr<BABufferUnitNode> _node;
 	BAOverlapped(OverlappedType type) : _type(type), _trans_byte(0) 
 	{
 		memset(this, 0, sizeof(OVERLAPPED));

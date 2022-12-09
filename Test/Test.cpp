@@ -4,6 +4,7 @@
 #include <iostream>
 #include <queue>
 #include "BAMemoryPool.h"
+#include "BAScheduler.h"
 
 void ClientWorking()
 {
@@ -38,14 +39,36 @@ void ClientWorking()
 	}
 }
 
+class JOB 
+{
+public:
+	void Process()
+	{
+
+	}
+
+	void Complete()
+	{
+
+	}
+};
+
 int main()
 {
-	BANetworkManager network;
+	/*BANetworkManager network;
 	network.Initialize();
 	network.StartNetwork();
 	
 	Sleep(1000);
 	std::thread t(ClientWorking);
 
-	t.join();
+	t.join();*/
+
+	BAScheduler<std::shared_ptr<JOB>> sch;
+	sch.RegistJob(4000, std::make_shared<JOB>());
+
+	while (1)
+	{
+		sch.Loop();
+	}
 }

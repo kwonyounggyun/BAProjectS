@@ -60,13 +60,14 @@ INT32 BABufferContainer::Write(UINT8* buf, INT32 len)
         }
     } while (remain > 0);
 
+    size += len;
     return len;
 }
 
 INT32 BABufferContainer::Read(UINT8* buf, INT32 len)
 {
     //쓰려는 버퍼 크기보다 쓰여진 크기가 작으면 실패
-    if (false == CheckReadableSize(len))
+    if (size < len)
         return -1;
 
     //여기서 부터 실제 버퍼에 씀
@@ -86,12 +87,13 @@ INT32 BABufferContainer::Read(UINT8* buf, INT32 len)
         }
     } while (remain > 0);
 
+    size -= len;
     return len;
 }
 
 BOOL BABufferContainer::Peek(UINT8* buf, INT32 len)
 {
-    if (false == CheckReadableSize(len))
+    if (size < len)
         return false;
 
     std::shared_ptr<BABufferUnitNode> node = _cur_read;
@@ -114,26 +116,6 @@ BOOL BABufferContainer::Peek(UINT8* buf, INT32 len)
     } while (remain > 0);
 
     return true;
-}
-
-BOOL BABufferContainer::CheckReadableSize(INT32 len)
-{
-    std::shared_ptr<BABufferUnitNode> node = _cur_read;
-    int readable_size = 0;
-    while (node != _cur_write)
-    {
-        readable_size += node->_buffer.GetReadableSize();
-        if (readable_size >= len)
-            return true;
-
-        node = node->_next;
-    }
-
-    readable_size += node->_buffer.GetReadableSize();
-    if (readable_size >= len)
-        return true;
-
-    return false;
 }
 
 BOOL BABufferContainer::Reserve(INT32 length)

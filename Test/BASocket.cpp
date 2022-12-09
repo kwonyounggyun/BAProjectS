@@ -12,9 +12,9 @@ BASocket::~BASocket()
 
 void BASocket::Recv()
 {
-	BAReadOverlapped* read = new BAReadOverlapped();
-	read->_wsa_buf.buf = _recv_buf;
-	read->_wsa_buf.len = 4000;
+	BARecvOverlapped* read = new BARecvOverlapped();
+	WSABUF wsa_buf[5];
+	_recv_buf.GetRecvWsaBuf(wsa_buf, 5);
 
 	/* Âü°í
 	(CALLBACK * LPWSAOVERLAPPED_COMPLETION_ROUTINE)(
@@ -27,7 +27,14 @@ void BASocket::Recv()
 
 	DWORD flags = 0;
 
-	int result = WSARecv(_socket, &read->_wsa_buf, 1, NULL, &flags, read, nullptr);
+	int result = WSARecv(_socket, wsa_buf, 5, NULL, &flags, read, [](IN DWORD dwError,
+		IN DWORD cbTransferred,
+		IN LPWSAOVERLAPPED lpOverlapped,
+		IN DWORD dwFlags)->void {
+
+		});
+
+
 	if (result == SOCKET_ERROR)
 	{
 		if (WSA_IO_PENDING != WSAGetLastError())
@@ -38,18 +45,31 @@ void BASocket::Recv()
 	}
 }
 
-void BASocket::Accept()
+void BASocket::Send()
 {
 }
 
-void BASocket::Recv(std::shared_ptr<BABufferUnitNode>& node)
+void BASocket::Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn)
 {
-	_recv_buf.Write(node);
-}
+	BAAcceptOverlapped* overlapped = new BAAcceptOverlapped();
+	overlapped->_client = this;
 
-void BASocket::Send(void* msg, int size)
-{
-	
+	WSABUF wsa_buf;
+	_recv_buf.GetRecvWsaBuf(&wsa_buf, 1);
+
+	if (false == accept_fn(listen_socket, _socket, wsa_buf.buf,
+		0,
+		sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
+		&overlapped->_trans_byte, (LPOVERLAPPED)overlapped))
+	{
+		int error_code = WSAGetLastError();
+		if (ERROR_IO_PENDING != error_code)
+		{
+			wprintf(L"AcceptEx failed with error: %u\n", error_code);
+			Close();
+			return;
+		}
+	}
 }
 
 void BASocket::Close()
@@ -76,10 +96,9 @@ bool BASocket::InitSocket()
 
 void BASocket::Read()
 {
-
 }
 
 void BASocket::Write(void* msg, int size)
 {
-	_send_buf.Write((char*)msg, size);
+	_send_buf.Write((UINT8*)msg, size);
 }

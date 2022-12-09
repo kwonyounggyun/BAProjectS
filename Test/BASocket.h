@@ -1,11 +1,12 @@
 #pragma once
+#include "BANetworkBuffer.h"
 
 class BASocket : ISocket
 {
 private:
 	SOCKET _socket;
-	BABufferContainer _recv_buf;
-	BABufferContainer _send_buf;
+	BANetworkBuffer _recv_buf;
+	BANetworkBuffer _send_buf;
 	//char _recv_buf[4000];
 	
 public:
@@ -14,12 +15,9 @@ public:
 	const SOCKET GetSocket() { return _socket; }
 
 	void Recv();
-
-	// ISocket을(를) 통해 상속됨
-	virtual void Accept() override;
-	virtual void Recv(std::shared_ptr<BABufferUnitNode>& node) override;
-	virtual void Send(void* msg, int size) override;
-
+	void Send();
+	void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
+	
 	void Close();
 	bool InitSocket();
 
