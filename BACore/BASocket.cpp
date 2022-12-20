@@ -27,12 +27,7 @@ void BASocket::Recv()
 
 	DWORD flags = 0;
 
-	int result = WSARecv(_socket, wsa_buf, 5, NULL, &flags, read, [](IN DWORD dwError,
-		IN DWORD cbTransferred,
-		IN LPWSAOVERLAPPED lpOverlapped,
-		IN DWORD dwFlags)->void {
-
-		});
+	int result = WSARecv(_socket, wsa_buf, 5, NULL, &flags, read, nullptr);
 
 
 	if (result == SOCKET_ERROR)
@@ -40,6 +35,7 @@ void BASocket::Recv()
 		if (WSA_IO_PENDING != WSAGetLastError())
 		{
 			ErrorLog("WSA Recv Error");
+			Close();
 			return;
 		}
 	}
@@ -47,6 +43,23 @@ void BASocket::Recv()
 
 void BASocket::Send()
 {
+	BASendOverlapped* send_overlap = new BASendOverlapped();
+	WSABUF wsa_buf[5];
+	int count = 5;
+	_recv_buf.GetSendWsaBuf(wsa_buf, count);
+
+	int result = WSASend(_socket, wsa_buf, count, NULL, NULL, send_overlap, nullptr);
+
+
+	if (result == SOCKET_ERROR)
+	{
+		if (WSA_IO_PENDING != WSAGetLastError())
+		{
+			ErrorLog("WSA Recv Error");
+			Close();
+			return;
+		}
+	}
 }
 
 void BASocket::Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn)
@@ -94,11 +107,13 @@ bool BASocket::InitSocket()
 	return true;
 }
 
-void BASocket::Read()
+void BASocket::Read(void* msg, size_t size)
 {
+	_recv_buf.Read(msg, size);
 }
 
-void BASocket::Write(void* msg, int size)
+void BASocket::Write(PACKET_HEADER& header, void* msg, size_t size)
 {
-	_send_buf.Write((UINT8*)msg, size);
+	_send_buf.Write(&header, HEADER_SIZE);
+	_send_buf.Write(msg, size);
 }

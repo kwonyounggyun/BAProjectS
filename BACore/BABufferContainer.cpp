@@ -36,8 +36,9 @@ BOOL BABufferUnit::Peek(UINT8* buf, INT32 size)
 	return true;
 }
 
-INT32 BABufferContainer::Write(UINT8* buf, INT32 len)
+INT32 BABufferContainer::Write(void* buf, INT32 len)
 {
+    UINT8* msg_buf = reinterpret_cast<UINT8*>(buf);
     INT32 remain = len;
     do
     {
@@ -45,7 +46,7 @@ INT32 BABufferContainer::Write(UINT8* buf, INT32 len)
 
         if (tail_remain_buf_size <= remain)
         {
-            remain -= _cur_write->_buffer.Write((UINT8*)(buf) + len - remain, tail_remain_buf_size);
+            remain -= _cur_write->_buffer.Write(msg_buf + len - remain, tail_remain_buf_size);
 
             if (_cur_write->_next == nullptr)
             {
@@ -56,61 +57,65 @@ INT32 BABufferContainer::Write(UINT8* buf, INT32 len)
         }
         else
         {
-            remain -= _cur_write->_buffer.Write(buf + len - remain, remain);
+            remain -= _cur_write->_buffer.Write(msg_buf + len - remain, remain);
         }
     } while (remain > 0);
 
-    size += len;
+    _size += len;
     return len;
 }
 
-INT32 BABufferContainer::Read(UINT8* buf, INT32 len)
+INT32 BABufferContainer::Read(void* buf, INT32 len)
 {
     //쓰려는 버퍼 크기보다 쓰여진 크기가 작으면 실패
-    if (size < len)
+    if (!Readable(len))
         return -1;
 
+    UINT8* msg_buf = reinterpret_cast<UINT8*>(buf);
+
     //여기서 부터 실제 버퍼에 씀
-    int remain = len;
+    INT32 remain = len;
     do
     {
-        int head_remain_read_size = _cur_read->_buffer.GetReadableSize();
+        INT32 head_remain_read_size = _cur_read->_buffer.GetReadableSize();
 
         if (head_remain_read_size <= remain)
         {
-            remain -= _cur_read->_buffer.Read(buf + len - remain, head_remain_read_size);
+            remain -= _cur_read->_buffer.Read(msg_buf + len - remain, head_remain_read_size);
             _cur_read = _cur_read->_next;
         }
         else
         {
-            remain -= _cur_read->_buffer.Read(buf + len - remain, remain);
+            remain -= _cur_read->_buffer.Read(msg_buf + len - remain, remain);
         }
     } while (remain > 0);
 
-    size -= len;
+    _size -= len;
     return len;
 }
 
-BOOL BABufferContainer::Peek(UINT8* buf, INT32 len)
+BOOL BABufferContainer::Peek(void* buf, INT32 len)
 {
-    if (size < len)
+    if (!Readable(len))
         return false;
 
+    UINT8* msg_buf = reinterpret_cast<UINT8*>(buf);
+
     std::shared_ptr<BABufferUnitNode> node = _cur_read;
-    int remain = len;
+    INT32 remain = len;
     do
     {
-        int node_remain_read_size = node->_buffer.GetReadableSize();
+        INT32 node_remain_read_size = node->_buffer.GetReadableSize();
 
         if (node_remain_read_size <= remain)
         {
-            node->_buffer.Peek(buf + len - remain, node_remain_read_size);
+            node->_buffer.Peek(msg_buf + len - remain, node_remain_read_size);
             remain -= node_remain_read_size;
             node = node->_next;    
         }
         else
         {
-            node->_buffer.Peek(buf + len - remain, remain);
+            node->_buffer.Peek(msg_buf + len - remain, remain);
             remain = 0;
         }
     } while (remain > 0);
@@ -118,9 +123,9 @@ BOOL BABufferContainer::Peek(UINT8* buf, INT32 len)
     return true;
 }
 
-BOOL BABufferContainer::Reserve(INT32 length)
+BOOL BABufferContainer::Reserve(size_t length)
 {
-    INT32 remain = length;
+    size_t remain = length;
     remain -= _cur_write->_buffer.GetWriteableSize();
 
     auto node = _cur_write;
@@ -143,4 +148,3 @@ BOOL BABufferContainer::PushNode()
 
     return TRUE;
 }
-

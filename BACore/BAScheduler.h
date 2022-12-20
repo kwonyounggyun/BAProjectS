@@ -2,6 +2,9 @@
 #include <map>
 #include <list>
 
+/*
+* Type으로 사용하는 클래스는 void Process(), void Complete() 함수를 멤버로 가지고 있어야한다.
+*/
 template<typename T>
 class BAScheduler
 {
@@ -11,7 +14,6 @@ public:
 
 private:
 	std::multimap<time_t, T> _wait_jobs;
-	std::list<T> _complete_jobs;
 };
 
 template<typename T>
@@ -19,23 +21,23 @@ inline void BAScheduler<T>::Loop()
 {
 	auto _current = GetTickCount64();
 
+	std::list<T> complete_jobs;
+
 	auto iter = _wait_jobs.begin();
 	while (iter != _wait_jobs.end())
 	{
-		if (iter->first < _current)
+		if (iter->first > _current)
 			break;
 
 		iter->second->Process();
 
-		_complete_jobs.push_back(iter->second);
+		complete_jobs.push_back(iter->second);
 		iter = _wait_jobs.erase(iter);
 	}
 
-	auto complete_iter = _complete_jobs.begin();
-	while (complete_iter != _complete_jobs.end())
+	for (auto job : complete_jobs)
 	{
-		(*complete_iter)->Complete();
-		complete_iter = _complete_jobs.erase(complete_iter);
+		job->Complete();
 	}
 }
 

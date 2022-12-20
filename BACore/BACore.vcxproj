@@ -24,6 +24,7 @@
     <ProjectGuid>{c6fa16fb-bc0b-44b6-8860-11cc86b7ee3e}</ProjectGuid>
     <RootNamespace>Test</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>BACore</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -40,13 +41,13 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -145,7 +146,7 @@
     <ClCompile Include="BANetworkManager.cpp" />
     <ClCompile Include="BAScheduler.cpp" />
     <ClCompile Include="BASocket.cpp" />
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BABufferContainer.h" />
@@ -156,8 +157,10 @@
     <ClInclude Include="BANetworkManager.h" />
     <ClInclude Include="BAOverlapped.h" />
     <ClInclude Include="BAScheduler.h" />
+    <ClInclude Include="BASingleton.h" />
     <ClInclude Include="BASocket.h" />
     <ClInclude Include="INetworkManager.h" />
+    <ClInclude Include="NetMessage.h" />
     <ClInclude Include="ISocket.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="stdafx.h" />

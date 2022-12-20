@@ -14,7 +14,6 @@ public:
     UINT8* GetWritePosition() { return &_buf[_tail]; }
     UINT8* GetReadPosition() { return &_buf[_head]; }
 
-private:
     UINT8 _buf[MAX_UNIT_BUFFER_SIZE + 1];
     INT32 _capacity;
     INT32 _head;
@@ -40,21 +39,23 @@ public:
 class BABufferContainer
 {
 public:
-    BABufferContainer():size(0)
+    BABufferContainer():_size(0)
     {
         _cur_read = _cur_write = _tail = std::make_shared<BABufferUnitNode>();
     }
 
-    INT32 Write(UINT8* buf, INT32 len);
-    INT32 Read(UINT8* buf, INT32 len);
-    BOOL Peek(UINT8* buf, INT32 len);
-    BOOL Reserve(INT32 length);
+    INT32 Write(void* buf, INT32 len);
+    INT32 Read(void* buf, INT32 len);
+    BOOL Peek(void* buf, INT32 len);
+    BOOL Reserve(size_t length);
     BOOL PushNode();
+    BOOL Readable(size_t size) { return _size >= (INT64)size; }
+    BOOL Readable() { return _size > 0; }
 
 protected:
     std::shared_ptr<BABufferUnitNode> _cur_read;
     std::shared_ptr<BABufferUnitNode> _cur_write;
     std::shared_ptr<BABufferUnitNode> _tail;
 
-    UINT64 size;
+    INT64 _size;
 };

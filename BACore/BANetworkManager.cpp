@@ -98,6 +98,11 @@ void BANetworkManager::StartNetwork()
 	InfoLog("Start Network");
 }
 
+void BANetworkManager::SetPacketSize(PACKET_HEADER header, size_t size)
+{
+	_map_packet_size.insert(std::make_pair(header, size));
+}
+
 void BANetworkManager::Loop()
 {
 	while (1)
@@ -113,23 +118,34 @@ void BANetworkManager::Loop()
 		}
 
 
-		/*switch (overlapped->_type)
+		switch (overlapped->_type)
 		{
 		case OverlappedType::ACCEPT:
 			{
 				BAAcceptOverlapped* accept_overlapped = static_cast<BAAcceptOverlapped*>(overlapped);
-				sockaddr_in local_addr;
-				accept_overlapped->_node->_buffer.Read(&local_addr, sizeof(sockaddr_in));
-				sockaddr_in remote_addr;
-				accept_overlapped->_node->_buffer.Read(&remote_addr, sizeof(sockaddr_in));
+				auto client = accept_overlapped->_client;
+				client->_recv_buf.UpdateRecv(trans_byte);
+
+				char sock_addr_local[200] = { 0, };
+				char sock_addr_remote[200] = { 0, };
+				client->Read(&sock_addr_local, sizeof(sockaddr_in)+16);
+				sockaddr_in* local_addr = reinterpret_cast<sockaddr_in*>(sock_addr_local);
+
+				client->Read(&sock_addr_remote, sizeof(sockaddr_in)+16);
+				sockaddr_in* remote_addr = reinterpret_cast<sockaddr_in*>(sock_addr_remote);
+
 				char local_ip[200] = { 0, };
 				char remote_ip[200] = { 0, };
 
-				inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, 200);
-				inet_ntop(AF_INET, &remote_addr.sin_addr, remote_ip, 200);
+				inet_ntop(AF_INET, &local_addr->sin_addr, local_ip, 200);
+				inet_ntop(AF_INET, &remote_addr->sin_addr, remote_ip, 200);
 				InfoLog("Server IP [%s] Client IP [%s] Connect", local_ip, remote_ip);
 
-				accept_overlapped->_client->Recv();
+				client->Recv();
+
+				//send 대기 등록;
+				BASendOverlapped* send_overlapped = new BASendOverlapped();
+				PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, send_overlapped);
 				delete accept_overlapped;
 			}
 			break;
@@ -138,43 +154,37 @@ void BANetworkManager::Loop()
 				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
 				BARecvOverlapped* recv_overlapped = static_cast<BARecvOverlapped*>(overlapped);
 
-				auto head_node = recv_overlapped->_node;
-				int buf_size = sizeof(recv_overlapped->_node->_buffer._buf);
-				int count = trans_byte / buf_size;
-				int remain = trans_byte % buf_size;
-				
-				auto node = head_node;
-				for (int i = 0; i < count; i++)
+				if (FALSE == client->_recv_buf.UpdateRecv(trans_byte))
 				{
-					node->_buffer.SetDataRange(0, buf_size);
-					node = node->_next;
-				}
-				node->_buffer.SetDataRange(0, remain);
-				recv_overlapped->_node = node->_next;
-				node->_next = nullptr;
-
-				client->Recv(recv_overlapped->_node);
-
-				auto head = recv_overlapped->_node;
-
-				WSABUF wsa_buf[5];
-				for (int i = 0; i < 5; i++)
-				{
-					if (head == nullptr)
-						head = std::make_shared<BABufferUnitNode>();
-
-					wsa_buf[i].buf = head->_buffer._buf;
-					wsa_buf[i].len = head->_buffer._capacity;
-
-					head = head->_next;
+					client->InitSocket();
+					client->Accept(_listen_socket.GetSocket(), _lpfn_acceptEx);
+					break;
 				}
 
-				auto read_overlapped = static_cast<BAReadOverlapped*>(overlapped);
-				std::cout << "READ : " << read_overlapped->_wsa_buf.buf << std::endl;
+				do {
+					PACKET_HEADER header;
+					if (FALSE == client->_recv_buf.Peek(&header, HEADER_SIZE))
+						break;
 
-				send(client->GetSocket(), read_overlapped->_wsa_buf.buf, strlen(read_overlapped->_wsa_buf.buf) + 1, 0);
-				delete read_overlapped;
-				
+					MAP_PACKET_SIZE::iterator iter = _map_packet_size.find(header);
+					if (iter == _map_packet_size.end())
+					{
+						//종료
+					}
+
+					INT32 read_size = HEADER_SIZE + iter->second;
+					if (FALSE == client->_recv_buf.Readable(read_size))
+						break;
+
+					NetMessage* msg = new NetMessage();
+
+					if (client->_recv_buf.Read(msg, read_size) < 0)
+						break;
+
+					RecvPacketProcess(msg);
+
+				} while (1);
+
 				client->Recv();
 			}
 			break;
@@ -182,15 +192,17 @@ void BANetworkManager::Loop()
 		case OverlappedType::SEND:
 			{
 				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
-				auto read_overlapped = static_cast<BAReadOverlapped*>(overlapped);
-				std::cout << "READ : " << read_overlapped->_wsa_buf.buf << std::endl;
+				auto send_overlapped = static_cast<BASendOverlapped*>(overlapped);
 
-				send(client->GetSocket(), read_overlapped->_wsa_buf.buf, strlen(read_overlapped->_wsa_buf.buf) + 1, 0);
-				delete read_overlapped;
-
-				client->Recv();
+				if (!client->_recv_buf.Readable()) //보낼게 없으면 완료큐에 이전꺼 다시 넣음;
+					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, send_overlapped);
+				else
+				{
+					delete send_overlapped;
+					client->Send();
+				}
 			}
 			break;
-		}*/
+		}
 	}
 }

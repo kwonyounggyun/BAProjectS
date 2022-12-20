@@ -16,6 +16,7 @@
 
 #define MAX_PACKET_SIZE 4096
 
+#include "NetMessage.h"
 #include "ISocket.h"
 #include "INetworkManager.h"
 #include "Log.h"
