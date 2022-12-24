@@ -1,13 +1,31 @@
 #include "stdafx.h"
-#include "BANetworkManager.h"
+#include "BANetworkEngine.h"
 
 void __stdcall WorkThread(void* p)
 {
-	BANetworkManager* network = static_cast<BANetworkManager*>(p);
+	BANetworkEngine* network = static_cast<BANetworkEngine*>(p);
 	network->Loop();
 }
 
-bool BANetworkManager::Initialize()
+void BANetworkEngine::CloseSocket(ISocket* socket)
+{
+	auto ba_socket = static_cast<BASocket*>(socket);
+
+	_client_sockets.erase(ba_socket);
+	ba_socket->Close();
+
+	delete ba_socket;
+}
+
+void BANetworkEngine::AcceptSocket()
+{
+	BASocket* new_socket;
+	_listen_socket.Accept((ISocket**)&new_socket);
+
+	_client_sockets.insert(new_socket);
+}
+
+bool BANetworkEngine::Initialize()
 {
 	WSADATA wsa_data;
 	if (0 != WSAStartup(MAKEWORD(2, 2), &wsa_data))
@@ -18,8 +36,7 @@ bool BANetworkManager::Initialize()
 
 	_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
 	if (_iocp_handle == NULL) {
-		ErrorLog("CreateIoCompletionPort failed with error: %u\n", GetLastError());
-		WSACleanup();
+		ErrorLog("CreateIoCompletionPort failed with error: %u\n", WSAGetLastError());
 		return false;
 	}
 
@@ -29,7 +46,12 @@ bool BANetworkManager::Initialize()
 		return false;
 	}
 
-	CreateIoCompletionPort((HANDLE)_listen_socket.GetSocket(), _iocp_handle, (ULONG_PTR)0, 0);
+	auto iocp_result = CreateIoCompletionPort((HANDLE)_listen_socket.GetSocket(), _iocp_handle, (ULONG_PTR)0, 0);
+	if (iocp_result == NULL)
+	{
+		ErrorLog("CreateIoCompletionPort listen socket regist failed!");
+		return false;
+	}
 
 	SOCKADDR_IN server_addr;
 	memset(&server_addr, 0x00, sizeof(server_addr));
@@ -37,48 +59,27 @@ bool BANetworkManager::Initialize()
 	server_addr.sin_port = htons(9999);
 	server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
-	if (SOCKET_ERROR == bind(_listen_socket.GetSocket(), (struct sockaddr*)&server_addr, sizeof(SOCKADDR_IN)))
-	{
-		ErrorLog("Bind Socket Failed");
+	if (false == _listen_socket.Bind(server_addr))
 		return false;
-	}
 
-	if(SOCKET_ERROR == listen(_listen_socket.GetSocket(), 5))
-	{
-		ErrorLog("Listen Socket Failed");
+	if (false == _listen_socket.Listen(5))
 		return false;
-	}
-
-	DWORD dw_bytes;
-	if (SOCKET_ERROR == WSAIoctl(_listen_socket.GetSocket(), SIO_GET_EXTENSION_FUNCTION_POINTER,
-		&_guid_acceptEx, sizeof(_guid_acceptEx),
-		&_lpfn_acceptEx, sizeof(_lpfn_acceptEx),
-		&dw_bytes, NULL, NULL))
-	{
-		ErrorLog("WSAIoctl Failed");
-		_listen_socket.Close();
-		WSACleanup();
-		return false;
-	}
 
 	return true;
 }
 
-void BANetworkManager::StartNetwork()
+bool BANetworkEngine::StartNetwork()
 {
 	for(int i = 0; i< MAX_USER;i++)
 	{
-		BASocket* client_socket = new BASocket();
-			
-		if (false == client_socket->InitSocket())
-		{
-			WSACleanup();
-			return;
-		}
+		BASocket* client_socket;
 
-		client_socket->Accept(_listen_socket.GetSocket(), _lpfn_acceptEx);
+		if (false == _listen_socket.Accept((ISocket**) &client_socket))
+			return false;
 
-		_iocp_handle = CreateIoCompletionPort((HANDLE)client_socket->GetSocket(), _iocp_handle, (ULONG_PTR)client_socket, 0);
+		auto iocp_result = CreateIoCompletionPort((HANDLE)client_socket->GetSocket(), _iocp_handle, (ULONG_PTR)client_socket, 0);
+		if (iocp_result == NULL)
+			return false;
 
 		_client_sockets.push_back(client_socket);
 
@@ -98,12 +99,12 @@ void BANetworkManager::StartNetwork()
 	InfoLog("Start Network");
 }
 
-void BANetworkManager::SetPacketSize(PACKET_HEADER header, size_t size)
+void BANetworkEngine::SetPacketSize(PACKET_HEADER header, size_t size)
 {
 	_map_packet_size.insert(std::make_pair(header, size));
 }
 
-void BANetworkManager::Loop()
+void BANetworkEngine::Loop()
 {
 	while (1)
 	{
@@ -113,7 +114,11 @@ void BANetworkManager::Loop()
 
 		if (false == GetQueuedCompletionStatus(_iocp_handle, &trans_byte, &completion_key, (LPOVERLAPPED*) &overlapped, INFINITE))
 		{
-			ErrorLog("GetQueuedCompletionStatus Failed");
+			if (trans_byte == 0)
+			{
+				//상대방 비정상 종료
+				ErrorLog("GetQueuedCompletionStatus Failed");
+			}
 			continue;
 		}
 
@@ -149,15 +154,37 @@ void BANetworkManager::Loop()
 				delete accept_overlapped;
 			}
 			break;
+		case OverlappedType::CLOSE:
+			{
+				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
+				BACloseOverlapped* close_overlapped = static_cast<BACloseOverlapped*>(overlapped);
+
+				CloseSocket(client);
+				delete close_overlapped;
+
+				AcceptSocket();
+			}
+			break;
 		case OverlappedType::RECV:
 			{
 				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
 				BARecvOverlapped* recv_overlapped = static_cast<BARecvOverlapped*>(overlapped);
 
-				if (FALSE == client->_recv_buf.UpdateRecv(trans_byte))
+				if (trans_byte == 0)
 				{
-					client->InitSocket();
-					client->Accept(_listen_socket.GetSocket(), _lpfn_acceptEx);
+					//정상 종료
+					delete recv_overlapped;
+
+					BACloseOverlapped* close_overlapped = new BACloseOverlapped();
+					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, close_overlapped);
+				}
+
+				if (FALSE == client->_recv_buf.UpdateRecv(trans_byte) || )
+				{
+					ErrorLog("[%s] Never come in!", __FUNCTION__);
+					BACloseOverlapped* close_overlapped = new BACloseOverlapped();
+					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, close_overlapped);
+
 					break;
 				}
 
@@ -194,7 +221,7 @@ void BANetworkManager::Loop()
 				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
 				auto send_overlapped = static_cast<BASendOverlapped*>(overlapped);
 
-				if (!client->_recv_buf.Readable()) //보낼게 없으면 완료큐에 이전꺼 다시 넣음;
+				if (!client->_recv_buf.Readable())
 					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, send_overlapped);
 				else
 				{

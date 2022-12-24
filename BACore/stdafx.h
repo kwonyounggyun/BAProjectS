@@ -13,12 +13,13 @@
 #include <tchar.h>
 #include <vector>
 #include <map>
+#include <set>
 
 #define MAX_PACKET_SIZE 4096
 
 #include "NetMessage.h"
 #include "ISocket.h"
-#include "INetworkManager.h"
+#include "INetworkEngine.h"
 #include "Log.h"
 
 /*BABufferContainer 에서 사용*/
@@ -33,4 +34,4 @@
 
 #include "BAOverlapped.h"
 #include "BASocket.h"
-#include "BANetworkManager.h"
+#include "BANetworkEngine.h"

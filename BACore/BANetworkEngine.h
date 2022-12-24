@@ -1,9 +1,9 @@
 #pragma once
-#include "INetworkManager.h"
+#include "INetworkEngine.h"
 #include "BASingleton.h"
 #include <unordered_map>
 
-class BANetworkManager : public INetworkManager, public BASingleton<BANetworkManager>
+class BANetworkEngine : public INetworkEngine
 {
 private:
 	BASocket _listen_socket;
@@ -12,26 +12,22 @@ private:
 	using MAP_PACKET_SIZE = std::unordered_map<WORD, size_t>;
 	MAP_PACKET_SIZE _map_packet_size;
 
-	std::vector<BASocket*> _client_sockets;
+	std::set<BASocket*> _client_sockets;
 	std::vector<std::shared_ptr<std::thread>> _threads;
 
 	HANDLE _iocp_handle;
 
-	LPFN_ACCEPTEX _lpfn_acceptEx = NULL;
-	GUID _guid_acceptEx = WSAID_ACCEPTEX;
+private:
+	void CloseSocket(ISocket* socket);
+	void AcceptSocket();
 
 public:
-	// INetworkManager을(를) 통해 상속됨
+	// INetworkEngine을(를) 통해 상속됨
 	virtual bool Initialize() override;
-	virtual void StartNetwork() override;
+	virtual bool StartNetwork() override;
 	void SetPacketSize(PACKET_HEADER header, size_t size);
 
 	virtual void RecvPacketProcess(NetMessage* msg) { delete msg; }
-
-	void PostSend(const BASocket& socket);
-
+	
 	void Loop();
 };
-
-#define GetNetworkManager() BANetworkManager::GetInstance();
-

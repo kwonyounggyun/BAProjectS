@@ -17,6 +17,8 @@ struct BAOverlapped : public OVERLAPPED
 	{
 		memset(this, 0, sizeof(OVERLAPPED));
 	}
+
+	virtual ~BAOverlapped() = 0 {};
 };
 
 struct BARecvOverlapped:public BAOverlapped, public BAMemoryPool<BARecvOverlapped>
@@ -33,4 +35,9 @@ struct BAAcceptOverlapped :public BAOverlapped, public  BAMemoryPool<BAAcceptOve
 {
 	BASocket* _client;
 	BAAcceptOverlapped() : BAOverlapped(OverlappedType::ACCEPT), _client(nullptr) {}
+};
+
+struct BACloseOverlapped :public BAOverlapped, public  BAMemoryPool<BACloseOverlapped>
+{
+	BACloseOverlapped() : BAOverlapped(OverlappedType::CLOSE) {}
 };

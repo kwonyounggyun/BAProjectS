@@ -22,7 +22,12 @@ private:
 	* send_buf에 저장된 내용을 보낸다.
 	*/
 	void Send();
-	void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
+	
+	//void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
+	virtual bool Bind(const SOCKADDR_IN& sock_addr) override;
+	virtual bool Listen(int backlog) override;
+	virtual bool Accept(ISocket** socket) override;
+	virtual void Connect(const SOCKADDR_IN& sock_addr) override;
 	
 	void Close();
 	bool InitSocket();

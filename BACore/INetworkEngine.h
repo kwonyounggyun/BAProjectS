@@ -1,8 +1,8 @@
 #pragma once
 
-class INetworkManager
+class INetworkEngine
 {
 protected:
 	virtual bool Initialize() = 0;
-	virtual void StartNetwork() = 0;
+	virtual bool StartNetwork() = 0;
 };
