@@ -143,7 +143,7 @@
   <ItemGroup>
     <ClCompile Include="BABufferContainer.cpp" />
     <ClCompile Include="BANetworkBuffer.cpp" />
-    <ClCompile Include="BANetworkManager.cpp" />
+    <ClCompile Include="BANetworkEngine.cpp" />
     <ClCompile Include="BAScheduler.cpp" />
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -154,12 +154,12 @@
     <ClInclude Include="BACriticalSection.h" />
     <ClInclude Include="BAMemoryPool.h" />
     <ClInclude Include="BANetworkBuffer.h" />
-    <ClInclude Include="BANetworkManager.h" />
+    <ClInclude Include="BANetworkEngine.h" />
     <ClInclude Include="BAOverlapped.h" />
     <ClInclude Include="BAScheduler.h" />
     <ClInclude Include="BASingleton.h" />
     <ClInclude Include="BASocket.h" />
-    <ClInclude Include="INetworkManager.h" />
+    <ClInclude Include="INetworkEngine.h" />
     <ClInclude Include="NetMessage.h" />
     <ClInclude Include="ISocket.h" />
     <ClInclude Include="Log.h" />

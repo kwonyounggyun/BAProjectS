@@ -74,7 +74,7 @@
 //
 //int main()
 //{
-//	BANetworkManager network;
+//	BANetworkEngine network;
 //
 //	network.Initialize();
 //	network.StartNetwork();

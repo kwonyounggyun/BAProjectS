@@ -3,7 +3,7 @@
 
 class BASocket : ISocket
 {
-	friend class BANetworkManager;
+	friend class BANetworkEngine;
 private:
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
