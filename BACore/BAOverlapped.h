@@ -1,43 +1,40 @@
 #pragma once
-
-class BASocket;
-enum class OverlappedType
+class BAOverlapped : public OVERLAPPED
 {
-	RECV = 0,
-	SEND = 1,
-	ACCEPT = 2,
-	CLOSE = 3
-};
-
-struct BAOverlapped : public OVERLAPPED
-{
-	OverlappedType _type;
+protected:
+	__int32 _error_code;
+	ULONG_PTR _object;
 	DWORD _trans_byte;
-	BAOverlapped(OverlappedType type) : _type(type), _trans_byte(0) 
-	{
-		memset(this, 0, sizeof(OVERLAPPED));
-	}
 
-	virtual ~BAOverlapped() = 0 {};
+public:
+	explicit BAOverlapped(ULONG_PTR obj) : OVERLAPPED(), _error_code(0), _object(obj), _trans_byte(0) {}
+
+	virtual ~BAOverlapped() {};
+	virtual void CompleteIO() = 0;
+
+	void SetTransByte(DWORD trans_byte) { _trans_byte = trans_byte; }
 };
 
-struct BARecvOverlapped:public BAOverlapped, public BAMemoryPool<BARecvOverlapped>
+class BAOverlapped_Recv : public BAOverlapped
 {
-	BARecvOverlapped() : BAOverlapped(OverlappedType::RECV) {}
+public:
+	explicit BAOverlapped_Recv(ULONG_PTR obj) : BAOverlapped(obj) {}
+	// BAOverlapped을(를) 통해 상속됨
+	virtual void CompleteIO() override;
 };
 
-struct BASendOverlapped: public BAOverlapped, public  BAMemoryPool<BASendOverlapped>
+class BAOverlapped_Send : public BAOverlapped
 {
-	BASendOverlapped() : BAOverlapped(OverlappedType::SEND) {}
+public:
+	explicit BAOverlapped_Send(ULONG_PTR obj) : BAOverlapped(obj) {}
+	// BAOverlapped을(를) 통해 상속됨
+	virtual void CompleteIO() override;
 };
 
-struct BAAcceptOverlapped :public BAOverlapped, public  BAMemoryPool<BAAcceptOverlapped>
+class BAOverlapped_Accept : public BAOverlapped
 {
-	BASocket* _client;
-	BAAcceptOverlapped() : BAOverlapped(OverlappedType::ACCEPT), _client(nullptr) {}
-};
-
-struct BACloseOverlapped :public BAOverlapped, public  BAMemoryPool<BACloseOverlapped>
-{
-	BACloseOverlapped() : BAOverlapped(OverlappedType::CLOSE) {}
+public:
+	explicit BAOverlapped_Accept(ULONG_PTR obj) : BAOverlapped(obj) {}
+	// BAOverlapped을(를) 통해 상속됨
+	virtual void CompleteIO() override;
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "BANetworkBuffer.h"
+#include "BAProxyConnection.h"
 
 class BASocket : ISocket
 {
@@ -8,7 +9,8 @@ private:
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
 	BANetworkBuffer _send_buf;
-	std::atomic_bool _send_able;
+	
+	BAProxyConnection* _connection;
 	
 public:
 	BASocket();
@@ -16,21 +18,23 @@ public:
 	const SOCKET GetSocket() { return _socket; }
 
 private:
-	//여기는 네트워크 하단 부에서 사용하는 함수들이기 때문에 유저에게 공개 안함
-	void Recv();
-	/*
-	* send_buf에 저장된 내용을 보낸다.
-	*/
-	void Send();
+	bool Recv();
+	bool Send();
 	
 	//void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
-	virtual bool Bind(const SOCKADDR_IN& sock_addr) override;
-	virtual bool Listen(int backlog) override;
-	virtual bool Accept(ISocket** socket) override;
-	virtual void Connect(const SOCKADDR_IN& sock_addr) override;
+	bool Bind(const SOCKADDR_IN& sock_addr);
+	bool Listen(int backlog);
+	bool Accept(ISocket** socket);
+	void Connect(const SOCKADDR_IN& sock_addr);
 	
 	void Close();
 	bool InitSocket();
+
+public:
+	//네트워크 처리용
+	void OnAccept(DWORD trans_byte);
+	void OnRecv(DWORD trans_byte);
+	void OnSend(DWORD trans_byte);
 
 public:
 	// ISocket을(를) 통해 상속됨

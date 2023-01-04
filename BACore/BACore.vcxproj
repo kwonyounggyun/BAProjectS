@@ -144,6 +144,8 @@
     <ClCompile Include="BABufferContainer.cpp" />
     <ClCompile Include="BANetworkBuffer.cpp" />
     <ClCompile Include="BANetworkEngine.cpp" />
+    <ClCompile Include="BAOverlapped.cpp" />
+    <ClCompile Include="BAProxyConnection.cpp" />
     <ClCompile Include="BAScheduler.cpp" />
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -156,6 +158,7 @@
     <ClInclude Include="BANetworkBuffer.h" />
     <ClInclude Include="BANetworkEngine.h" />
     <ClInclude Include="BAOverlapped.h" />
+    <ClInclude Include="BAProxyConnection.h" />
     <ClInclude Include="BAScheduler.h" />
     <ClInclude Include="BASingleton.h" />
     <ClInclude Include="BASocket.h" />

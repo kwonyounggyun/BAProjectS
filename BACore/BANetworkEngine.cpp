@@ -7,22 +7,25 @@ void __stdcall WorkThread(void* p)
 	network->Loop();
 }
 
-void BANetworkEngine::CloseSocket(ISocket* socket)
+bool BANetworkEngine::AcceptSocket()
 {
-	auto ba_socket = static_cast<BASocket*>(socket);
+	BASocket* socket;
+	if (false == _listen_socket.Accept((ISocket**)socket))
+		return false;
 
-	_client_sockets.erase(ba_socket);
-	ba_socket->Close();
+	std::shared_ptr<BASocket> s = socket;
+	auto iocp_result = CreateIoCompletionPort((HANDLE)socket->GetSocket(), _iocp_handle, (ULONG_PTR)socket, 0);
+	if (iocp_result == NULL)
+	{
+		ErrorLog("Iocp failed to register the client. ErrorCode[%d]", GetLastError());
+		return false;
+	}
 
-	delete ba_socket;
-}
+	_client_sockets.insert(socket);
 
-void BANetworkEngine::AcceptSocket()
-{
-	BASocket* new_socket;
-	_listen_socket.Accept((ISocket**)&new_socket);
+	socket->_active.store(true);
 
-	_client_sockets.insert(new_socket);
+	return true;
 }
 
 bool BANetworkEngine::Initialize()
@@ -36,7 +39,7 @@ bool BANetworkEngine::Initialize()
 
 	_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
 	if (_iocp_handle == NULL) {
-		ErrorLog("CreateIoCompletionPort failed with error: %u\n", WSAGetLastError());
+		ErrorLog("CreateIoCompletionPort failed with error: %u\n", GetLastError());
 		return false;
 	}
 
@@ -72,22 +75,7 @@ bool BANetworkEngine::StartNetwork()
 {
 	for(int i = 0; i< MAX_USER;i++)
 	{
-		BASocket* client_socket;
-
-		if (false == _listen_socket.Accept((ISocket**) &client_socket))
-			return false;
-
-		auto iocp_result = CreateIoCompletionPort((HANDLE)client_socket->GetSocket(), _iocp_handle, (ULONG_PTR)client_socket, 0);
-		if (iocp_result == NULL)
-			return false;
-
-		_client_sockets.push_back(client_socket);
-
-		if (WSA_IO_PENDING != WSAGetLastError())
-		{
-			ErrorLog("IO Pending failed");
-			return;
-		}
+		AcceptSocket();
 	}
 
 	for (int i = 0; i < 10; i++)
@@ -108,128 +96,39 @@ void BANetworkEngine::Loop()
 {
 	while (1)
 	{
-		DWORD trans_byte;
-		ULONG_PTR completion_key;
-		BAOverlapped* overlapped;
+		DWORD trans_byte = 0;
+		ULONG_PTR completion_key = 0;
+		BAOverlapped* overlapped = nullptr;
 
 		if (false == GetQueuedCompletionStatus(_iocp_handle, &trans_byte, &completion_key, (LPOVERLAPPED*) &overlapped, INFINITE))
 		{
-			if (trans_byte == 0)
+			if (overlapped != NULL)
 			{
 				//상대방 비정상 종료
 				ErrorLog("GetQueuedCompletionStatus Failed");
+
+				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
+				client->Close();
+
+				delete overlapped;
 			}
+			else
+			{
+				//완료포트 핸들이 닫힌 경우 스레드 종료
+				if (GetLastError() == ERROR_ABANDONED_WAIT_0)
+				{
+					ErrorLog("CompletionPort is not valid");
+					break;
+				}
+			}
+
 			continue;
 		}
 
+		overlapped->SetTransByte(trans_byte);
 
-		switch (overlapped->_type)
-		{
-		case OverlappedType::ACCEPT:
-			{
-				BAAcceptOverlapped* accept_overlapped = static_cast<BAAcceptOverlapped*>(overlapped);
-				auto client = accept_overlapped->_client;
-				client->_recv_buf.UpdateRecv(trans_byte);
+		overlapped->CompleteIO();
 
-				char sock_addr_local[200] = { 0, };
-				char sock_addr_remote[200] = { 0, };
-				client->Read(&sock_addr_local, sizeof(sockaddr_in)+16);
-				sockaddr_in* local_addr = reinterpret_cast<sockaddr_in*>(sock_addr_local);
-
-				client->Read(&sock_addr_remote, sizeof(sockaddr_in)+16);
-				sockaddr_in* remote_addr = reinterpret_cast<sockaddr_in*>(sock_addr_remote);
-
-				char local_ip[200] = { 0, };
-				char remote_ip[200] = { 0, };
-
-				inet_ntop(AF_INET, &local_addr->sin_addr, local_ip, 200);
-				inet_ntop(AF_INET, &remote_addr->sin_addr, remote_ip, 200);
-				InfoLog("Server IP [%s] Client IP [%s] Connect", local_ip, remote_ip);
-
-				client->Recv();
-
-				//send 대기 등록;
-				BASendOverlapped* send_overlapped = new BASendOverlapped();
-				PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, send_overlapped);
-				delete accept_overlapped;
-			}
-			break;
-		case OverlappedType::CLOSE:
-			{
-				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
-				BACloseOverlapped* close_overlapped = static_cast<BACloseOverlapped*>(overlapped);
-
-				CloseSocket(client);
-				delete close_overlapped;
-
-				AcceptSocket();
-			}
-			break;
-		case OverlappedType::RECV:
-			{
-				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
-				BARecvOverlapped* recv_overlapped = static_cast<BARecvOverlapped*>(overlapped);
-
-				if (trans_byte == 0)
-				{
-					//정상 종료
-					delete recv_overlapped;
-
-					BACloseOverlapped* close_overlapped = new BACloseOverlapped();
-					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, close_overlapped);
-				}
-
-				if (FALSE == client->_recv_buf.UpdateRecv(trans_byte) || )
-				{
-					ErrorLog("[%s] Never come in!", __FUNCTION__);
-					BACloseOverlapped* close_overlapped = new BACloseOverlapped();
-					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, close_overlapped);
-
-					break;
-				}
-
-				do {
-					PACKET_HEADER header;
-					if (FALSE == client->_recv_buf.Peek(&header, HEADER_SIZE))
-						break;
-
-					MAP_PACKET_SIZE::iterator iter = _map_packet_size.find(header);
-					if (iter == _map_packet_size.end())
-					{
-						//종료
-					}
-
-					INT32 read_size = HEADER_SIZE + iter->second;
-					if (FALSE == client->_recv_buf.Readable(read_size))
-						break;
-
-					NetMessage* msg = new NetMessage();
-
-					if (client->_recv_buf.Read(msg, read_size) < 0)
-						break;
-
-					RecvPacketProcess(msg);
-
-				} while (1);
-
-				client->Recv();
-			}
-			break;
-
-		case OverlappedType::SEND:
-			{
-				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
-				auto send_overlapped = static_cast<BASendOverlapped*>(overlapped);
-
-				if (!client->_recv_buf.Readable())
-					PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)client, send_overlapped);
-				else
-				{
-					delete send_overlapped;
-					client->Send();
-				}
-			}
-			break;
-		}
+		delete overlapped;
 	}
 }

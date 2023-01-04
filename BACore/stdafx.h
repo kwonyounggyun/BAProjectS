@@ -35,3 +35,5 @@
 #include "BAOverlapped.h"
 #include "BASocket.h"
 #include "BANetworkEngine.h"
+
+#define BA_NEW new
