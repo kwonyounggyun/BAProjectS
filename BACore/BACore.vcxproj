@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BABaseServer.cpp" />
     <ClCompile Include="BABufferContainer.cpp" />
     <ClCompile Include="BANetworkBuffer.cpp" />
     <ClCompile Include="BANetworkEngine.cpp" />
@@ -151,6 +152,7 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BABaseServer.h" />
     <ClInclude Include="BABufferContainer.h" />
     <ClInclude Include="BACircularQueue.h" />
     <ClInclude Include="BACriticalSection.h" />
