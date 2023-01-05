@@ -37,3 +37,4 @@
 #include "BANetworkEngine.h"
 
 #define BA_NEW new
+#define BAMake_shared<_type>(...) std::make_shared<_type>(...)

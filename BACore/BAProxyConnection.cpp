@@ -1,32 +1,30 @@
 #include "stdafx.h"
 #include "BAProxyConnection.h"
 
+#define MAX_SAVE_NETWORK_MSG 4000
+
 void BAProxyConnection::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 {
-	BASmartCS lock(&_cs);
-
-	_list_msg.push_back(msg);
-}
-
-void BAProxyConnection::MsgProcess()
-{
-	std::list<std::shared_ptr<NetMessage>> temp_list;
 	{
 		BASmartCS lock(&_cs);
-		temp_list.assign(_list_msg.begin(), _list_msg.end());
+		_msg_seq = (_msg_seq + 1) % MAX_SAVE_NETWORK_MSG;
+		auto find_msg = _map_msg.find(_msg_seq);
+		if (find_msg == _map_msg.end())
+		{
+			msg->SetConnection(this);
+			_map_msg.insert(std::make_pair(_msg_seq, msg));
+		}
+		else
+		{
+			//여긴 연결 끊자... 메세지가 처리되지않고 있다고 봐도 된다.
+		}
 	}
 
-	for (auto iter = temp_list.begin(); iter != temp_list.end(); iter++)
+	if (TRUE == _server.expired())
 	{
-		_handler[*((*iter)->_header)](*iter);
+
 	}
-}
 
-void BAProxyConnection::Process()
-{
-	MsgProcess();
-
-	//동작 처리
-
-	
+	auto server = _server.lock();
+	server->EnqueueMsg(msg);
 }

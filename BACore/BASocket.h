@@ -10,7 +10,7 @@ private:
 	BANetworkBuffer _recv_buf;
 	BANetworkBuffer _send_buf;
 	
-	BAProxyConnection* _connection;
+	std::shared_ptr<BAProxyConnection> _connection;
 	
 public:
 	BASocket();

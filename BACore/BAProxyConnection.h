@@ -1,15 +1,21 @@
 #pragma once
 #include <unordered_map>
-#include "BACriticalSection.h"
-#include <functional>
+#include <memory>
+#include <atomic>
 
+#include "BACriticalSection.h"
+#include "BABaseServer.h"
+
+class BABaseServer;
 class BAProxyConnection
 {
 	friend class BASocket;
 
 private:
-	std::unordered_map<PACKET_HEADER, std::function<void(std::shared_ptr<NetMessage>& msg)>> _handler;
-	std::list<std::shared_ptr<NetMessage>> _list_msg;
+	int _msg_seq;
+	//角力 皋技瘤 包府
+	std::unordered_map<int ,std::shared_ptr<NetMessage>> _map_msg;
+	std::weak_ptr<BABaseServer> _server;
 
 	BACS _cs;
 
@@ -19,5 +25,10 @@ private:
 
 public:
 	void Process();
+
+	~BAProxyConnection() 
+	{
+		_list_msg.clear();
+	}
 };
 
