@@ -1,4 +1,6 @@
-#include "stdafx.h"
+#include "BAOverlapped.h"
+#include "BANetworkEngine.h"
+#include "BASocket.h"
 
 void BAOverlapped_Recv::CompleteIO()
 {
@@ -15,5 +17,6 @@ void BAOverlapped_Send::CompleteIO()
 void BAOverlapped_Accept::CompleteIO()
 {
 	BASocket* socket = reinterpret_cast<BASocket*>(_object);
-	socket->OnAccept(_trans_byte);
+
+	_engine->OnAccept(socket, _trans_byte);
 }

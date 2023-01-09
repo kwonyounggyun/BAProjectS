@@ -1,8 +1,9 @@
 #pragma once
+#include "BACore.h"
 #include "BANetworkBuffer.h"
-#include "BAProxyConnection.h"
 
-class BASocket : ISocket
+class BASession;
+class BASocket
 {
 	friend class BANetworkEngine;
 private:
@@ -10,7 +11,7 @@ private:
 	BANetworkBuffer _recv_buf;
 	BANetworkBuffer _send_buf;
 	
-	std::shared_ptr<BAProxyConnection> _connection;
+	std::shared_ptr<BASession> _session;
 	
 public:
 	BASocket();
@@ -24,7 +25,7 @@ private:
 	//void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
 	bool Bind(const SOCKADDR_IN& sock_addr);
 	bool Listen(int backlog);
-	bool Accept(ISocket** socket);
+	bool Accept();
 	void Connect(const SOCKADDR_IN& sock_addr);
 	
 	void Close();
@@ -37,7 +38,6 @@ public:
 	void OnSend(DWORD trans_byte);
 
 public:
-	// ISocket을(를) 통해 상속됨
-	virtual void Read(void* msg, size_t size) override;
-	virtual void Write(PACKET_HEADER& header, void* msg, size_t size) override;
+	void Read(void* msg, __int32 size);
+	void Write(PACKET_HEADER& header, void* msg, __int32 size);
 };

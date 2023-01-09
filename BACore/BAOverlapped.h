@@ -1,10 +1,15 @@
 #pragma once
+#include "BACore.h"
+
+class BASocket;
+class BANetworkEngine;
 class BAOverlapped : public OVERLAPPED
 {
 protected:
 	__int32 _error_code;
 	ULONG_PTR _object;
 	DWORD _trans_byte;
+	BANetworkEngine* _engine;
 
 public:
 	explicit BAOverlapped(ULONG_PTR obj) : OVERLAPPED(), _error_code(0), _object(obj), _trans_byte(0) {}
@@ -13,6 +18,7 @@ public:
 	virtual void CompleteIO() = 0;
 
 	void SetTransByte(DWORD trans_byte) { _trans_byte = trans_byte; }
+	void SetEngine(BANetworkEngine* engine) { _engine = engine; }
 };
 
 class BAOverlapped_Recv : public BAOverlapped

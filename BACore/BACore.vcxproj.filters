@@ -30,16 +30,19 @@
     <ClCompile Include="BANetworkBuffer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BAScheduler.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="BAOverlapped.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BAProxyConnection.cpp">
+    <ClCompile Include="BASession.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BABaseServer.cpp">
+    <ClCompile Include="BAConnection.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="BAPacketAdapter.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="BAEncryptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -53,9 +56,6 @@
     <ClInclude Include="BAMemoryPool.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ISocket.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="BAOverlapped.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -63,9 +63,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="INetworkEngine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BANetworkEngine.h">
@@ -89,10 +86,19 @@
     <ClInclude Include="BASingleton.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BAProxyConnection.h">
+    <ClInclude Include="BASession.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BABaseServer.h">
+    <ClInclude Include="BAConnection.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BAPacketAdapter.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BACore.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BAEncryptor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

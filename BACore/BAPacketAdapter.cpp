@@ -1,9 +1,7 @@
-#include "stdafx.h"
-#include "BAProxyConnection.h"
+#include "BAPacketAdapter.h"
+#include "BAConnection.h"
 
-#define MAX_SAVE_NETWORK_MSG 4000
-
-void BAProxyConnection::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
+void BAPacketAdapter::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 {
 	{
 		BASmartCS lock(&_cs);
@@ -11,7 +9,6 @@ void BAProxyConnection::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 		auto find_msg = _map_msg.find(_msg_seq);
 		if (find_msg == _map_msg.end())
 		{
-			msg->SetConnection(this);
 			_map_msg.insert(std::make_pair(_msg_seq, msg));
 		}
 		else
@@ -20,11 +17,12 @@ void BAProxyConnection::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 		}
 	}
 
-	if (TRUE == _server.expired())
+	/*if (TRUE == _server.expired())
 	{
 
 	}
 
 	auto server = _server.lock();
 	server->EnqueueMsg(msg);
+	*/
 }

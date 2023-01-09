@@ -1,5 +1,5 @@
-#include "stdafx.h"
 #include "BANetworkEngine.h"
+#include "BASession.h"
 
 void __stdcall WorkThread(void* p)
 {
@@ -9,11 +9,16 @@ void __stdcall WorkThread(void* p)
 
 bool BANetworkEngine::AcceptSocket()
 {
-	BASocket* socket;
-	if (false == _listen_socket.Accept((ISocket**)socket))
+	if (false == _listen_socket.Accept())
 		return false;
 
-	std::shared_ptr<BASocket> s = socket;
+	return true;
+}
+
+bool BANetworkEngine::RegistSocket(BASocket* socket)
+{
+	BASmartCS lock(&_cs);
+
 	auto iocp_result = CreateIoCompletionPort((HANDLE)socket->GetSocket(), _iocp_handle, (ULONG_PTR)socket, 0);
 	if (iocp_result == NULL)
 	{
@@ -21,11 +26,32 @@ bool BANetworkEngine::AcceptSocket()
 		return false;
 	}
 
-	_client_sockets.insert(socket);
+	return true;
+}
 
-	socket->_active.store(true);
+bool BANetworkEngine::UnregistSocket(BASocket* socket)
+{
+	BASmartCS lock(&_cs);
+
+	_sessions.erase(socket);
 
 	return true;
+}
+
+void BANetworkEngine::OnAccept(BASocket* socket, DWORD trans_byte)
+{
+	if (TRUE == RegistSocket(socket))
+	{
+		auto session = std::make_shared<BASession>(socket);
+		_sessions.insert(std::make_pair(socket, session));
+		socket->OnAccept(trans_byte);
+		OnAcceptComplete(session);
+	}
+}
+
+void BANetworkEngine::OnClose(BASocket* socket)
+{
+	UnregistSocket(socket);
 }
 
 bool BANetworkEngine::Initialize()
@@ -73,28 +99,48 @@ bool BANetworkEngine::Initialize()
 
 bool BANetworkEngine::StartNetwork()
 {
-	for(int i = 0; i< MAX_USER;i++)
-	{
-		AcceptSocket();
-	}
-
 	for (int i = 0; i < 10; i++)
 	{
-		std::shared_ptr<std::thread> t =std::make_shared<std::thread>(WorkThread, this);
+		std::thread* t = BA_NEW std::thread(WorkThread, this);
 		_threads.push_back(t);
 	}
 
 	InfoLog("Start Network");
+
+	return true;
+}
+
+bool BANetworkEngine::Release()
+{
+	state = false;
+
+	_listen_socket.Close();
+
+	for (auto session : _sessions)
+	{
+		session.first->Close();
+		BA_DELETE(session.first);
+	}
+	_sessions.clear();
+
+	for (auto worker : _threads)
+	{
+		worker->join();
+		BA_DELETE(worker);
+	}
+	_threads.clear();
+
+	return true;
 }
 
 void BANetworkEngine::SetPacketSize(PACKET_HEADER header, size_t size)
 {
-	_map_packet_size.insert(std::make_pair(header, size));
+	
 }
 
 void BANetworkEngine::Loop()
 {
-	while (1)
+	while (state)
 	{
 		DWORD trans_byte = 0;
 		ULONG_PTR completion_key = 0;
@@ -110,7 +156,7 @@ void BANetworkEngine::Loop()
 				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
 				client->Close();
 
-				delete overlapped;
+				BA_DELETE(overlapped)
 			}
 			else
 			{
@@ -124,11 +170,10 @@ void BANetworkEngine::Loop()
 
 			continue;
 		}
-
+		overlapped->SetEngine(this);
 		overlapped->SetTransByte(trans_byte);
-
 		overlapped->CompleteIO();
 
-		delete overlapped;
+		BA_DELETE(overlapped)
 	}
 }

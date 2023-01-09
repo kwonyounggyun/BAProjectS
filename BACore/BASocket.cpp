@@ -1,5 +1,6 @@
-#include "stdafx.h"
 #include "BASocket.h"
+#include "BAOverlapped.h"
+#include "BASession.h"
 
 BASocket::BASocket():_socket(INVALID_SOCKET)
 {
@@ -35,7 +36,7 @@ bool BASocket::Recv()
 bool BASocket::Send()
 {
 	if (_socket == INVALID_SOCKET)
-		return;
+		return false;
 
 	WSABUF wsa_buf[5];
 	int count = 5;
@@ -77,7 +78,7 @@ bool BASocket::Listen(int backlog)
 	return true;
 }
 
-bool BASocket::Accept(ISocket** socket)
+bool BASocket::Accept()
 {
 	LPFN_ACCEPTEX lpfn_acceptEx = NULL;
 	GUID guid_acceptEx = WSAID_ACCEPTEX;
@@ -92,11 +93,10 @@ bool BASocket::Accept(ISocket** socket)
 		return false;
 	}
 
-	auto client = new BASocket();
+	auto client = BA_NEW BASocket();
 	client->InitSocket();
 
-	BAAcceptOverlapped* overlapped = new BAAcceptOverlapped();
-	overlapped->_client = client;
+	BAOverlapped_Accept* overlapped = BA_NEW BAOverlapped_Accept((ULONG_PTR)client);
 	
 	WSABUF wsa_buf;
 	client->_recv_buf.GetRecvWsaBuf(&wsa_buf, 1);
@@ -110,14 +110,12 @@ bool BASocket::Accept(ISocket** socket)
 		if (ERROR_IO_PENDING != error_code)
 		{
 			ErrorLog("AcceptEx failed with error: %u", error_code);
-			delete overlapped;
-			delete client;
+			BA_DELETE(overlapped)
+			BA_DELETE(client)
 
 			return false;
 		}
 	}
-
-	*socket = client;
 
 	return true;
 }
@@ -126,29 +124,6 @@ void BASocket::Connect(const SOCKADDR_IN& sock_addr)
 {
 	
 }
-
-//void BASocket::Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn)
-//{
-//	BAAcceptOverlapped* overlapped = new BAAcceptOverlapped();
-//	overlapped->_client = this;
-//
-//	WSABUF wsa_buf;
-//	_recv_buf.GetRecvWsaBuf(&wsa_buf, 1);
-//
-//	if (false == accept_fn(listen_socket, _socket, wsa_buf.buf,
-//		0,
-//		sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
-//		&overlapped->_trans_byte, (LPOVERLAPPED)overlapped))
-//	{
-//		int error_code = WSAGetLastError();
-//		if (ERROR_IO_PENDING != error_code)
-//		{
-//			wprintf(L"AcceptEx failed with error: %u\n", error_code);
-//			Close();
-//			return;
-//		}
-//	}
-//}
 
 void BASocket::Close()
 {
@@ -226,10 +201,10 @@ void BASocket::OnRecv(DWORD trans_byte)
 
 				std::shared_ptr<NetMessage> msg = std::make_shared<NetMessage>();
 
-				if (_recv_buf.Read(msg->_array, read_size) < 0)
+				if (_recv_buf.Read(msg->GetBuffer(), read_size) < 0)
 					break;
 
-				_connection->EnqueueMsg(msg);
+				_session->EnqueueMsg(msg);
 
 			} while (1);
 
@@ -247,12 +222,12 @@ void BASocket::OnSend(DWORD trans_byte)
 	}
 }
 
-void BASocket::Read(void* msg, size_t size)
+void BASocket::Read(void* msg,  __int32 size)
 {
 	_recv_buf.Read(msg, size);
 }
 
-void BASocket::Write(PACKET_HEADER& header, void* msg, size_t size)
+void BASocket::Write(PACKET_HEADER& header, void* msg, __int32 size)
 {
 	_send_buf.Write(&header, HEADER_SIZE);
 	_send_buf.Write(msg, size);

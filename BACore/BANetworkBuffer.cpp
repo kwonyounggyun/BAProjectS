@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "BANetworkBuffer.h"
 
 BOOL BANetworkBuffer::GetRecvWsaBuf(LPWSABUF wsa_buf, INT32 count)

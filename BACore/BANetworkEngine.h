@@ -1,25 +1,43 @@
 #pragma once
-#include "INetworkEngine.h"
-#include "BASingleton.h"
-#include <unordered_map>
+#include "BACore.h"
+#include "BASocket.h"
+#include "BASession.h"
+#include "BAOverlapped.h"
+#include "NetMessage.h"
 
-class BANetworkEngine : public INetworkEngine
+/*
+* 네트워크 처리 담당
+*/
+class BANetworkEngine
 {
 private:
-	BASocket _listen_socket;
+	bool state;
 
-	std::set<std::shared_ptr<BASocket>> _connect_sockets;
-	std::vector<std::shared_ptr<std::thread>> _threads;
+	BASocket _listen_socket;
+	std::map<BASocket*, std::shared_ptr<BASession>> _sessions;
+	std::vector<std::thread*> _threads;
 
 	HANDLE _iocp_handle;
+
+	BACS _cs;
 
 private:
 	bool AcceptSocket();
 
+private:
+	bool RegistSocket(BASocket* socket);
+	bool UnregistSocket(BASocket* socket);
+
 public:
-	// INetworkEngine을(를) 통해 상속됨
-	virtual bool Initialize() override;
-	virtual bool StartNetwork() override;
+	void OnAccept(BASocket* socket, DWORD trans_byte);
+	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session) = 0;
+
+	void OnClose(BASocket* socket);
+
+public:
+	bool Initialize();
+	bool StartNetwork();
+	bool Release();
 	void SetPacketSize(PACKET_HEADER header, size_t size);
 
 	virtual void RecvPacketProcess(NetMessage* msg) { delete msg; }
