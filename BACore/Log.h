@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAX_BUFFER_LENGTH 1024
+#define MAX_LOG_LENGTH 1024
 
 #define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, _T(data), __VA_ARGS__)
 #define InfoLog(data, ...) CLog::WriteLog(LogType::Info, _T(data), __VA_ARGS__)
@@ -38,10 +38,10 @@ public:
 		TCHAR CurrentDate[32] = { 0, };
 		TCHAR CurrentFileName[MAX_PATH] = { 0, };
 		FILE* FilePtr = NULL;
-		TCHAR DebugLog[MAX_BUFFER_LENGTH] = { 0, };
+		TCHAR DebugLog[MAX_LOG_LENGTH] = { 0, };
 
 		va_list ap;
-		TCHAR Log[MAX_BUFFER_LENGTH] = { 0, };
+		TCHAR Log[MAX_LOG_LENGTH] = { 0, };
 
 		va_start(ap, data);
 		_vstprintf_s(Log, data, ap);
@@ -56,7 +56,7 @@ public:
 			return FALSE;
 
 		_ftprintf(FilePtr, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
-		_sntprintf_s(DebugLog, MAX_BUFFER_LENGTH, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
+		_sntprintf_s(DebugLog, MAX_LOG_LENGTH, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
 
 		fflush(FilePtr);
 		fclose(FilePtr);

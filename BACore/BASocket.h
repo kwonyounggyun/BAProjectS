@@ -6,6 +6,7 @@ class BASession;
 class BASocket
 {
 	friend class BANetworkEngine;
+	friend class BASession;
 private:
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
@@ -38,6 +39,8 @@ public:
 	void OnSend(DWORD trans_byte);
 
 public:
-	void Read(void* msg, __int32 size);
-	void Write(PACKET_HEADER& header, void* msg, __int32 size);
+	bool Readable(__int32 size) { return _recv_buf.Readable(size); }
+	bool Peek(void* msg, __int32 size);
+	bool Read(void* msg, __int32 size);
+	void Write(void* msg, __int32 size);
 };

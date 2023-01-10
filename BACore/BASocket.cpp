@@ -1,6 +1,7 @@
 #include "BASocket.h"
 #include "BAOverlapped.h"
 #include "BASession.h"
+#include "BAEncryptor.h"
 
 BASocket::BASocket():_socket(INVALID_SOCKET)
 {
@@ -181,33 +182,7 @@ void BASocket::OnRecv(DWORD trans_byte)
 		}
 		else
 		{
-			do
-			{
-				PACKET_HEADER header;
-				if (FALSE == _recv_buf.Peek(&header, HEADER_SIZE))
-					break;
-
-				//MAP_PACKET_SIZE::iterator iter = _map_packet_size.find(header);
-				//if (iter == _map_packet_size.end())
-				//{
-				//	//Á¾·á
-				//}
-
-				//INT32 read_size = HEADER_SIZE + iter->second;
-				INT32 read_size = HEADER_SIZE;
-
-				if (FALSE == _recv_buf.Readable(read_size))
-					break;
-
-				std::shared_ptr<NetMessage> msg = std::make_shared<NetMessage>();
-
-				if (_recv_buf.Read(msg->GetBuffer(), read_size) < 0)
-					break;
-
-				_session->EnqueueMsg(msg);
-
-			} while (1);
-
+			_session->OnRecv();
 			Recv();
 		}
 	}
@@ -222,13 +197,21 @@ void BASocket::OnSend(DWORD trans_byte)
 	}
 }
 
-void BASocket::Read(void* msg,  __int32 size)
+bool BASocket::Peek(void* msg, __int32 size)
 {
-	_recv_buf.Read(msg, size);
+	return _recv_buf.Peek(msg, size);
 }
 
-void BASocket::Write(PACKET_HEADER& header, void* msg, __int32 size)
+bool BASocket::Read(void* msg,  __int32 size)
 {
-	_send_buf.Write(&header, HEADER_SIZE);
-	_send_buf.Write(msg, size);
+	if (_recv_buf.Readable(size))
+	{
+		_recv_buf.Read(msg, size);
+		return true;
+	}
+	return false;
+}
+
+void BASocket::Write(void* msg, __int32 size)
+{
 }

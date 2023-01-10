@@ -153,6 +153,7 @@
     <ClCompile Include="BAPacketAdapter.cpp" />
     <ClCompile Include="BASession.cpp" />
     <ClCompile Include="BASocket.cpp" />
+    <ClCompile Include="NetMessage.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>

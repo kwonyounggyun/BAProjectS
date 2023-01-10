@@ -2,7 +2,7 @@
 #include "BABufferContainer.h"
 
 #if !defined(MAX_NETWORK_BUF_COUNT)
-    #define BA_MAX_NETWORK_BUF_COUNT 5
+    #define MAX_NETWORK_BUF_COUNT 5
 #endif
 
 class BANetworkBuffer : public BABufferContainer

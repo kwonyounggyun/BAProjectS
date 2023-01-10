@@ -1,6 +1,13 @@
 #pragma once
 #include "BACore.h"
 
+#if !defined(MAX_UNIT_BUFFER_SIZE)
+    #define MAX_UNIT_BUFFER_SIZE (MAX_PACKET_SIZE * 10)
+#endif
+
+#if !defined(MAX_INIT_BUFFER_UNIT)
+    #define MAX_INIT_BUFFER_UNIT 4000 * 100
+#endif
 struct BABufferUnit
 {
 public:

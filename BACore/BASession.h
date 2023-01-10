@@ -12,7 +12,6 @@ class BAPacketAdapter;
 class BASession
 {
 	friend class BASocket;
-
 private:
 	BASocket* _socket;
 	std::shared_ptr<BAPacketAdapter> _packet_adapter;
@@ -21,10 +20,11 @@ private:
 	BACS _cs;
 
 private:
+	void OnRecv();
 	void EnqueueMsg(std::shared_ptr<NetMessage>& msg);
 
 public:
-	void SendMsg(PACKET_HEADER& header, void* msg, size_t size);
+	void SendMsg(std::shared_ptr<NetMessage>& msg);
 	
 	explicit BASession(BASocket* socket) : _socket(socket), _packet_adapter(nullptr) {}
 	~BASession()

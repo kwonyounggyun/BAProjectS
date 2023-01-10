@@ -35,7 +35,7 @@ BOOL BANetworkBuffer::GetSendWsaBuf(LPWSABUF wsa_buf, INT32& count)
 
 		node = node->_next;
 
-	} while (i < BA_MAX_NETWORK_BUF_COUNT && i < count);
+	} while (i < MAX_NETWORK_BUF_COUNT && i < count);
 
 	count = i;
 

@@ -33,6 +33,7 @@
 #define MAX_INIT_BUFFER_UNIT MAX_USER * 100
 #include "BABufferContainer.h"
 
+#define MAX_NETWORK_BUF_COUNT 5
 
 #define BA_NEW new
 #define BA_DELETE(a) delete a;
