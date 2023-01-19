@@ -21,6 +21,7 @@ private:
 
 private:
 	void OnRecv();
+	void OnSend();
 	void EnqueueMsg(std::shared_ptr<NetMessage>& msg);
 
 public:

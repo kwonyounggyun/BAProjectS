@@ -5,20 +5,19 @@ void BASession::OnRecv()
 {
 	do
 	{
-		WORD size;
-		if (FALSE == _socket->Peek(&size, sizeof(WORD)))
-			break;
-
-		if (FALSE == _socket->Readable(size))
-			break;
-
 		std::shared_ptr<NetMessage> msg = NetMessage::CreateMsg();
-		if (_socket->Read(msg->GetBuffer<char>(), size))
+		auto size = _socket->Read(msg->GetBuffer<char>(), msg->GetSize());
+		if (size > 0)
 		{
+			msg->SetSize(size);
 			EnqueueMsg(msg);
 		}
 
 	} while (1);
+}
+
+void BASession::OnSend()
+{
 }
 
 void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
@@ -28,5 +27,5 @@ void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 
 void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
 {
-	_socket->Write(msg->GetBuffer<char>(), )
+	_socket->Send(msg->GetBuffer<char>(), msg->GetSize());
 }

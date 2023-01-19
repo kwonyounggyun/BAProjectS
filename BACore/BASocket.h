@@ -10,7 +10,6 @@ class BASocket
 private:
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
-	BANetworkBuffer _send_buf;
 	
 	std::shared_ptr<BASession> _session;
 	
@@ -21,7 +20,7 @@ public:
 
 private:
 	bool Recv();
-	bool Send();
+	bool Send(void* msg, __int32 size);
 	
 	//void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
 	bool Bind(const SOCKADDR_IN& sock_addr);
@@ -32,6 +31,8 @@ private:
 	void Close();
 	bool InitSocket();
 
+	__int32 Read(void* msg, __int32 size);
+
 public:
 	//匙飘况农 贸府侩
 	void OnAccept(DWORD trans_byte);
@@ -41,6 +42,4 @@ public:
 public:
 	bool Readable(__int32 size) { return _recv_buf.Readable(size); }
 	bool Peek(void* msg, __int32 size);
-	bool Read(void* msg, __int32 size);
-	void Write(void* msg, __int32 size);
 };

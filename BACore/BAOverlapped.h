@@ -32,6 +32,8 @@ public:
 class BAOverlapped_Send : public BAOverlapped
 {
 public:
+	DWORD _send_byte;
+public:
 	explicit BAOverlapped_Send(ULONG_PTR obj) : BAOverlapped(obj) {}
 	// BAOverlapped을(를) 통해 상속됨
 	virtual void CompleteIO() override;

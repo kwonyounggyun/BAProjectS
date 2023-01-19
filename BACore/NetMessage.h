@@ -18,17 +18,20 @@ struct Header
 class NetMessage
 {
 private:
-	WORD* _size;
+	WORD _size;
 	Header* _header;
 	char* _buf;
 	char _array[MAX_PACKET_SIZE+ HEADER_SIZE];
-	explicit NetMessage() : _header((Header*)_array), _buf(_array + sizeof(Header)), _array({0,}) {};
+	explicit NetMessage() : _header((Header*)_array), _buf(_array + sizeof(Header)), _array({0,}), _size(sizeof(_array)) {};
 
 public:
 	static std::shared_ptr<NetMessage> CreateMsg();
 
 	template<typename T>
 	T* GetBuffer() { return reinterpret_cast<T>(_buf); }
+
+	WORD GetSize() { return _size; }
+	void SetSize(WORD size) { _size = size; }
 
 	Header* GetHeader() { return _header; }
 };
