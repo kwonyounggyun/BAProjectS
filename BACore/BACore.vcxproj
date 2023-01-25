@@ -153,6 +153,8 @@
     <ClCompile Include="BAPacketAdapter.cpp" />
     <ClCompile Include="BASession.cpp" />
     <ClCompile Include="BASocket.cpp" />
+    <ClCompile Include="BATaskFrame.cpp" />
+    <ClCompile Include="BAThread.cpp" />
     <ClCompile Include="NetMessage.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
@@ -172,6 +174,8 @@
     <ClInclude Include="BAScheduler.h" />
     <ClInclude Include="BASingleton.h" />
     <ClInclude Include="BASocket.h" />
+    <ClInclude Include="BATaskFrame.h" />
+    <ClInclude Include="BAThread.h" />
     <ClInclude Include="NetMessage.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="stdafx.h" />

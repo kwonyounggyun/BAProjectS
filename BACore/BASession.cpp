@@ -1,5 +1,6 @@
 #include "BASession.h"
 #include "BASocket.h"
+#include "BAOverlapped.h"
 
 void BASession::OnRecv()
 {
@@ -18,6 +19,7 @@ void BASession::OnRecv()
 
 void BASession::OnSend()
 {
+
 }
 
 void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
@@ -27,5 +29,5 @@ void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 
 void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
 {
-	_socket->Send(msg->GetBuffer<char>(), msg->GetSize());
+	_socket->Send(msg);
 }

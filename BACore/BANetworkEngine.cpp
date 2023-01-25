@@ -40,6 +40,8 @@ bool BANetworkEngine::UnregistSocket(BASocket* socket)
 
 void BANetworkEngine::OnAccept(BASocket* socket, DWORD trans_byte)
 {
+	BASmartCS lock(&_cs);
+
 	if (TRUE == RegistSocket(socket))
 	{
 		auto session = std::make_shared<BASession>(socket);
@@ -131,11 +133,6 @@ bool BANetworkEngine::Release()
 	_threads.clear();
 
 	return true;
-}
-
-void BANetworkEngine::SetPacketSize(PACKET_HEADER header, size_t size)
-{
-	
 }
 
 void BANetworkEngine::Loop()

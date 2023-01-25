@@ -38,7 +38,6 @@ public:
 	bool Initialize();
 	bool StartNetwork();
 	bool Release();
-	void SetPacketSize(PACKET_HEADER header, size_t size);
 
 	virtual void RecvPacketProcess(NetMessage* msg) { delete msg; }
 	

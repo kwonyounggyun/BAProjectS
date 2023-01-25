@@ -21,7 +21,13 @@ public:
 private:
 	bool Recv();
 	bool Send(void* msg, __int32 size);
-	
+
+	/*
+	* iocp 전용 send로 보내는 메세지 관리를 OVERLAPPED구조체에 맡기기위함.
+	*/
+	//TODO: NetMessage class를 Socket에서 알지 못하게 하고픈데..
+	bool Send(std::shared_ptr<NetMessage>& msg);
+
 	//void Accept(const SOCKET& listen_socket, LPFN_ACCEPTEX accept_fn);
 	bool Bind(const SOCKADDR_IN& sock_addr);
 	bool Listen(int backlog);

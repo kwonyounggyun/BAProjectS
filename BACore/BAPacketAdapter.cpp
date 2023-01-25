@@ -4,12 +4,12 @@
 void BAPacketAdapter::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 {
 	{
-		BASmartCS lock(&_cs);
-		_msg_seq = (_msg_seq + 1) % MAX_SAVE_NETWORK_MSG;
-		auto find_msg = _map_msg.find(_msg_seq);
+		while (true == _lock_flag.test_and_set(std::memory_order_acquire));
+
+		auto find_msg = _map_msg.find(msg.get());
 		if (find_msg == _map_msg.end())
 		{
-			_map_msg.insert(std::make_pair(_msg_seq, msg));
+			_map_msg.insert(std::make_pair(msg.get(), msg));
 		}
 		else
 		{
@@ -17,12 +17,10 @@ void BAPacketAdapter::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 		}
 	}
 
-	/*if (TRUE == _server.expired())
-	{
+	_thread->EnqueueMsg(msg);
+}
 
-	}
-
-	auto server = _server.lock();
-	server->EnqueueMsg(msg);
-	*/
+void BAPacketAdapter::DeleteMsg(NetMessage* msg)
+{
+	_map_msg.erase(msg);
 }
