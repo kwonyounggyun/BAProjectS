@@ -39,9 +39,6 @@
     <ClCompile Include="BAConnection.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BAPacketAdapter.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="BAEncryptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -52,6 +49,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BATaskFrame.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="BABaseFrame.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,9 +101,6 @@
     <ClInclude Include="BAConnection.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BAPacketAdapter.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="BACore.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -114,6 +111,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BATaskFrame.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BABaseFrame.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

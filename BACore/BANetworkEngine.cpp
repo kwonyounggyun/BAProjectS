@@ -15,45 +15,56 @@ bool BANetworkEngine::AcceptSocket()
 	return true;
 }
 
-bool BANetworkEngine::RegistSocket(BASocket* socket)
+bool BANetworkEngine::RegistSocket(ULONG_PTR key)
 {
 	BASmartCS lock(&_cs);
 
-	auto iocp_result = CreateIoCompletionPort((HANDLE)socket->GetSocket(), _iocp_handle, (ULONG_PTR)socket, 0);
+	auto socket = std::shared_ptr<BASocket>((BASocket*)key);
+
+	auto iocp_result = CreateIoCompletionPort((HANDLE)socket->GetSocket(), _iocp_handle, (ULONG_PTR)socket.get(), 0);
 	if (iocp_result == NULL)
 	{
 		ErrorLog("Iocp failed to register the client. ErrorCode[%d]", GetLastError());
 		return false;
 	}
 
-	return true;
-}
-
-bool BANetworkEngine::UnregistSocket(BASocket* socket)
-{
-	BASmartCS lock(&_cs);
-
-	_sessions.erase(socket);
+	_sockets.insert(std::make_pair(key, socket));
 
 	return true;
 }
 
-void BANetworkEngine::OnAccept(BASocket* socket, DWORD trans_byte)
+bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
 {
 	BASmartCS lock(&_cs);
 
-	if (TRUE == RegistSocket(socket))
-	{
-		auto session = std::make_shared<BASession>(socket);
-		_sessions.insert(std::make_pair(socket, session));
-		socket->OnAccept(trans_byte);
-		OnAcceptComplete(session);
-	}
+	auto iter = _sockets.find(key);
+	if(iter != _sockets.end())
+		_sockets.erase(iter);
+
+	return true;
 }
 
-void BANetworkEngine::OnClose(BASocket* socket)
+void BANetworkEngine::OnAccept(ULONG_PTR key, DWORD trans_byte)
 {
-	UnregistSocket(socket);
+	BASmartCS lock(&_cs);
+
+	auto iter = _sockets.find(key);
+	if (iter != _sockets.end())
+		return;
+
+	if (false == RegistSocket(key))
+		return;
+
+	//여기오면 무조건 잇어야함
+	iter = _sockets.find(key);
+	auto socket = iter->second;
+
+	auto session = std::make_shared<BASession>();
+	session->SetSocket(socket);
+	socket->SetSession(session);
+	socket->OnAccept(trans_byte);
+		
+	OnAcceptComplete(session);
 }
 
 bool BANetworkEngine::Initialize()
@@ -118,12 +129,7 @@ bool BANetworkEngine::Release()
 
 	_listen_socket.Close();
 
-	for (auto session : _sessions)
-	{
-		session.first->Close();
-		BA_DELETE(session.first);
-	}
-	_sessions.clear();
+	_sockets.clear();
 
 	for (auto worker : _threads)
 	{
@@ -149,9 +155,7 @@ void BANetworkEngine::Loop()
 			{
 				//상대방 비정상 종료
 				ErrorLog("GetQueuedCompletionStatus Failed");
-
-				BASocket* client = reinterpret_cast<BASocket*>(completion_key);
-				client->Close();
+				UnregistSocket(completion_key);
 
 				BA_DELETE(overlapped)
 			}

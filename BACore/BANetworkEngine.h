@@ -14,7 +14,7 @@ private:
 	bool state;
 
 	BASocket _listen_socket;
-	std::map<BASocket*, std::shared_ptr<BASession>> _sessions;
+	std::map<ULONG_PTR, std::shared_ptr<BASocket>> _sockets;
 	std::vector<std::thread*> _threads;
 
 	HANDLE _iocp_handle;
@@ -25,16 +25,15 @@ private:
 	bool AcceptSocket();
 
 private:
-	bool RegistSocket(BASocket* socket);
-	bool UnregistSocket(BASocket* socket);
+	bool RegistSocket(ULONG_PTR key);
+	bool UnregistSocket(ULONG_PTR key);
 
 public:
-	void OnAccept(BASocket* socket, DWORD trans_byte);
+	void OnAccept(ULONG_PTR key, DWORD trans_byte);
 	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session) = 0;
 
-	void OnClose(BASocket* socket);
-
 public:
+
 	bool Initialize();
 	bool StartNetwork();
 	bool Release();

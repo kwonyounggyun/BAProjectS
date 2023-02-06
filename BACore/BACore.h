@@ -41,6 +41,8 @@
 
 using PACKET_HEADER = WORD;
 #define HEADER_SIZE  sizeof(PACKET_HEADER)
+#define PACKET_PADDING 100
+
 #define PROTOCOL_HEADER(group, type) group << 8 || type
 
 #define MAX_SAVE_NETWORK_MSG 4000

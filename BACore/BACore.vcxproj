@@ -144,13 +144,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BABaseFrame.cpp" />
     <ClCompile Include="BABufferContainer.cpp" />
     <ClCompile Include="BAConnection.cpp" />
     <ClCompile Include="BAEncryptor.cpp" />
     <ClCompile Include="BANetworkBuffer.cpp" />
     <ClCompile Include="BANetworkEngine.cpp" />
     <ClCompile Include="BAOverlapped.cpp" />
-    <ClCompile Include="BAPacketAdapter.cpp" />
     <ClCompile Include="BASession.cpp" />
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="BATaskFrame.cpp" />
@@ -159,6 +159,7 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BABaseFrame.h" />
     <ClInclude Include="BABufferContainer.h" />
     <ClInclude Include="BACircularQueue.h" />
     <ClInclude Include="BAConnection.h" />
@@ -169,7 +170,6 @@
     <ClInclude Include="BANetworkBuffer.h" />
     <ClInclude Include="BANetworkEngine.h" />
     <ClInclude Include="BAOverlapped.h" />
-    <ClInclude Include="BAPacketAdapter.h" />
     <ClInclude Include="BASession.h" />
     <ClInclude Include="BAScheduler.h" />
     <ClInclude Include="BASingleton.h" />

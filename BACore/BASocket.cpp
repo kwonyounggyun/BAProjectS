@@ -3,7 +3,7 @@
 #include "BASession.h"
 #include "BAEncryptor.h"
 
-BASocket::BASocket():_socket(INVALID_SOCKET)
+BASocket::BASocket() :_socket(INVALID_SOCKET)
 {
 }
 
@@ -27,6 +27,7 @@ bool BASocket::Recv()
 		if (WSA_IO_PENDING != WSAGetLastError())
 		{
 			ErrorLog("WSA Recv Error");
+			BA_DELETE(overlapped)
 			return false;
 		}
 	}
@@ -34,62 +35,89 @@ bool BASocket::Recv()
 	return true;
 }
 
-bool BASocket::Send(void* msg, __int32 size)
+//bool BASocket::Send(void* msg, __int32 size)
+//{
+//	if (_socket == INVALID_SOCKET)
+//		return false;
+//
+//	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
+//	overlapped->_send_byte = size;
+//
+//	WSABUF wsa_buf[2];
+//	wsa_buf[0].buf = (CHAR*) & (overlapped->_send_byte);
+//	wsa_buf[0].len = sizeof(overlapped->_send_byte);
+//	wsa_buf[1].buf = (CHAR*)msg;
+//	wsa_buf[1].len = size;
+//	
+//	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
+//
+//	if (result == SOCKET_ERROR)
+//	{
+//		if (WSA_IO_PENDING != WSAGetLastError())
+//		{
+//			ErrorLog("WSA Recv Error");
+//			return false;
+//		}
+//	}
+//
+//	return true;
+//}
+
+bool BASocket::Send(void* msg, __int32 size, ULONG_PTR key)
 {
 	if (_socket == INVALID_SOCKET)
 		return false;
 
 	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
-	overlapped->_send_byte = size;
+	overlapped->SetMsgKey(key);
 
-	WSABUF wsa_buf[2];
-	wsa_buf[0].buf = (CHAR*) & (overlapped->_send_byte);
-	wsa_buf[0].len = sizeof(overlapped->_send_byte);
-	wsa_buf[1].buf = (CHAR*)msg;
-	wsa_buf[1].len = size;
-	
-	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
+	WSABUF wsa_buf;
+	wsa_buf.buf = (CHAR*)msg;
+	wsa_buf.len = size;
 
-	if (result == SOCKET_ERROR)
-	{
-		if (WSA_IO_PENDING != WSAGetLastError())
-		{
-			ErrorLog("WSA Recv Error");
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool BASocket::Send(std::shared_ptr<NetMessage>& msg)
-{
-	if (_socket == INVALID_SOCKET)
-		return false;
-
-	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
-	overlapped->SetMsg(msg);
-	overlapped->_send_byte = msg->GetSize();
-
-	WSABUF wsa_buf[2];
-	wsa_buf[0].buf = (CHAR*)&(overlapped->_send_byte);
-	wsa_buf[0].len = sizeof(overlapped->_send_byte);
-	wsa_buf[1].buf = msg->GetBuffer<CHAR>();
-	wsa_buf[1].len = msg->GetSize();
-
-	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
+	int result = WSASend(_socket, &wsa_buf, 1, NULL, NULL, overlapped, nullptr);
 
 	if (result == SOCKET_ERROR)
 	{
 		if (WSA_IO_PENDING != WSAGetLastError())
 		{
 			ErrorLog("WSA Send Error");
+			BA_DELETE(overlapped)
 			return false;
 		}
 	}
 
 	return true;
 }
+
+//bool BASocket::Send(std::shared_ptr<NetMessage>& msg)
+//{
+//	if (_socket == INVALID_SOCKET)
+//		return false;
+//
+//	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
+//	overlapped->SetMsg(msg);
+//	overlapped->_send_byte = msg->GetSize();
+//
+//	WSABUF wsa_buf[2];
+//	wsa_buf[0].buf = (CHAR*)&(overlapped->_send_byte);
+//	wsa_buf[0].len = sizeof(overlapped->_send_byte);
+//	wsa_buf[1].buf = msg->GetBuffer<CHAR>();
+//	wsa_buf[1].len = msg->GetSize();
+//
+//	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
+//
+//	if (result == SOCKET_ERROR)
+//	{
+//		if (WSA_IO_PENDING != WSAGetLastError())
+//		{
+//			ErrorLog("WSA Send Error");
+//			return false;
+//		}
+//	}
+//
+//	return true;
+//}
 
 bool BASocket::Bind(const SOCKADDR_IN& sock_addr)
 {
@@ -143,8 +171,8 @@ bool BASocket::Accept()
 		if (ERROR_IO_PENDING != error_code)
 		{
 			ErrorLog("AcceptEx failed with error: %u", error_code);
+			//overlapped 가 해제될때 client는 자동 해제된다.
 			BA_DELETE(overlapped)
-			BA_DELETE(client)
 
 			return false;
 		}
@@ -220,12 +248,16 @@ void BASocket::OnRecv(DWORD trans_byte)
 	}
 }
 
-void BASocket::OnSend(DWORD trans_byte)
+void BASocket::OnSend(DWORD trans_byte, ULONG_PTR key)
 {
 	if (FALSE == _recv_buf.UpdateSend(trans_byte))
 	{
 		ErrorLog("[%s] Never come in!", __FUNCTION__);
 		Close();
+	}
+	else
+	{
+		_session->OnSend(key);
 	}
 }
 
