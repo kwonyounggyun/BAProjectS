@@ -63,19 +63,21 @@ bool BASocket::Recv()
 //	return true;
 //}
 
-bool BASocket::Send(void* msg, __int32 size, ULONG_PTR key)
+bool BASocket::Send(std::shared_ptr<NetMessage>& msg)
 {
 	if (_socket == INVALID_SOCKET)
 		return false;
 
 	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
-	overlapped->SetMsgKey(key);
+	overlapped->SetMsg(msg);
 
-	WSABUF wsa_buf;
-	wsa_buf.buf = (CHAR*)msg;
-	wsa_buf.len = size;
+	WSABUF wsa_buf[2];
+	wsa_buf[0].buf = (CHAR*)&msg->_size;
+	wsa_buf[0].len = sizeof(msg->_size);
+	wsa_buf[1].buf = (CHAR*)&msg->_data;
+	wsa_buf[1].len = msg->_size;
 
-	int result = WSASend(_socket, &wsa_buf, 1, NULL, NULL, overlapped, nullptr);
+	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
 
 	if (result == SOCKET_ERROR)
 	{
@@ -266,24 +268,24 @@ bool BASocket::Peek(void* msg, __int32 size)
 	return _recv_buf.Peek(msg, size);
 }
 
-__int32 BASocket::Read(void* msg,  __int32 size)
+__int32 BASocket::Read(std::shared_ptr<NetMessage>& msg)
 {
 	DWORD recv_size;
 	if (FALSE == _recv_buf.Peek(&recv_size, sizeof(DWORD)))
-		return -1;
+		return 0;
 
 	DWORD total_size = recv_size += sizeof(DWORD);
 	if (FALSE == _recv_buf.Readable(total_size))
-		return -1;
+		return 0;
 
-	if (recv_size > size)
+	if (recv_size > msg->_size)
 	{
 		ErrorLog("Message buffer size over!");
-		return false;
+		return -1;
 	}
 
-	_recv_buf.Read(&total_size, sizeof(DWORD));
-	_recv_buf.Read(msg, recv_size);
+	_recv_buf.Read(&recv_size, sizeof(recv_size));
+	_recv_buf.Read(&msg->_data, recv_size);
 
 	return recv_size;
 }
