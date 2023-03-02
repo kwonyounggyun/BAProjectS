@@ -33,16 +33,14 @@ public:
 
 class BAOverlapped_Send : public BAOverlapped
 {
-//public:
-//	std::shared_ptr<NetMessage> _msg;
-//	DWORD _send_byte;
-	ULONG_PTR _msg_key;
 public:
-	explicit BAOverlapped_Send(ULONG_PTR obj) : BAOverlapped(obj) {}//, _send_byte(0), _msg(nullptr) {}
+	std::shared_ptr<NetMessage> _msg;
+	DWORD _send_byte;
+public:
+	explicit BAOverlapped_Send(ULONG_PTR obj) : BAOverlapped(obj) {}
 	// BAOverlapped을(를) 통해 상속됨
 	virtual void CompleteIO() override;
-	void SetMsgKey(ULONG_PTR key) { _msg_key = key; }
-	//void SetMsg(std::shared_ptr<NetMessage>& msg) { _msg = msg; }
+	void SetMsg(std::shared_ptr<NetMessage>& msg) { _msg = msg; }
 };
 
 class BAOverlapped_Accept : public BAOverlapped

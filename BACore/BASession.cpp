@@ -12,11 +12,19 @@ void BASession::OnRecv()
 	do
 	{
 		std::shared_ptr<NetMessage> msg = NetMessage::CreateMsg();
-		auto size = socket->Read(msg->GetBuffer<char>(), msg->GetSize());
+		auto size = socket->Read(msg);
 		if (size > 0)
 		{
-			msg->SetSize(size);
 			EnqueueMsg(msg);
+		}
+		else if (size == 0)
+		{
+			break;
+		}
+		else
+		{
+			//Session Delete
+			break;
 		}
 
 	} while (1);
