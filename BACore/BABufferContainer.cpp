@@ -78,7 +78,7 @@ __int32 BABufferContainer::Read(void* buf, __int32 len)
     {
         __int32 head_remain_read_size = _cur_read->_buffer.GetReadableSize();
 
-        if (head_remain_read_size <= remain)
+        if (head_remain_read_size < remain)
         {
             remain -= _cur_read->_buffer.Read(msg_buf + len - remain, head_remain_read_size);
             _cur_read = _cur_read->_next;
@@ -142,7 +142,7 @@ bool BABufferContainer::Reserve(size_t length)
 
 bool BABufferContainer::PushNode()
 {
-    _tail->_next = std::shared_ptr<BABufferUnitNode>();
+    _tail->_next = std::make_shared<BABufferUnitNode>();
     _tail = _tail->_next;
 
     return true;
