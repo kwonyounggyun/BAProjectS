@@ -7,8 +7,19 @@
 int main()
 {
     TestServer server;
-    server.Initialize();
-    server.StartNetwork();
+    
+    NetworkConfig config;
+    config._max_client = 100;
+    config._port = 9090;
+    config._option._recv_buf_size = 1000;
+    config._option._send_buf_size = 1000;
+    config._option._keep_alive = false;
+
+    std::vector<NetworkConfig> configs;
+    configs.push_back(config);
+    server.Initialize(configs);
+    server.StartNetwork(5);
+    while (1);
 }
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴

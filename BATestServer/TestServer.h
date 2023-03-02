@@ -1,14 +1,13 @@
 #pragma once
-#include "BAConnection.h"
+#include "BANetworkEngine.h"
+#include <vector>
 
-class TestServer : public BAConnection
+class TestServer : public BANetworkEngine
 {
 private:
-
+	std::vector<std::shared_ptr<BASession>> _sessions;
 
 public:
-	// BAConnection을(를) 통해 상속됨
-	virtual std::shared_ptr<BAPacketAdapter> CreateAdapter() override;
-
-	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session) override;
+	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session);
+	virtual void OnConnectComplete(std::shared_ptr<BASession>& session);
 };
