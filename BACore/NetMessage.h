@@ -10,9 +10,6 @@ struct Data
 };
 #pragma pack(pop)
 
-/*
-* 버퍼 타입으로 넘어오는 클래스는 GetSize()함수가 구현되어 있어야한다.
-*/
 class NetMessage
 {
 	friend class BASocket;
@@ -33,7 +30,7 @@ public:
 	template<typename T>
 	T* GetBuffer() { return reinterpret_cast<T>(_data._array); }
 
-	WORD GetSize() { return _size - sizeof(_size); }
+	ULONG GetSize() { return _size - sizeof(_size); }
 
 	template<typename T>
 	void SetSize() { _size = sizeof(_size) + reinterpret_cast<T>(_data._array).GetSize(); }

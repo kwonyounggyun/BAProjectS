@@ -1,10 +1,14 @@
 #include "BASocket.h"
 #include "BAOverlapped.h"
 #include "BASession.h"
+#include "NetMessage.h"
 #include "BAEncryptor.h"
 
-BASocket::BASocket() :_socket(INVALID_SOCKET)
+std::shared_ptr<BASocket> BASocket::CreateSocket()
 {
+	//return std::make_shared<BASocket>();
+	auto socket = BA_NEW BASocket();
+	return std::shared_ptr<BASocket>(socket);
 }
 
 BASocket::~BASocket()
@@ -18,8 +22,8 @@ bool BASocket::Recv()
 	_recv_buf.GetRecvWsaBuf(wsa_buf, 5);
 
 	DWORD flags = 0;
-
-	auto overlapped = BA_NEW BAOverlapped_Recv((ULONG_PTR)this);
+	auto weak = weak_from_this();
+	auto overlapped = BA_NEW BAOverlapped_Recv(weak);
 	int result = WSARecv(_socket, wsa_buf, 5, NULL, &flags, overlapped, nullptr);
 
 	if (result == SOCKET_ERROR)
@@ -68,7 +72,8 @@ bool BASocket::Send(std::shared_ptr<NetMessage>& msg)
 	if (_socket == INVALID_SOCKET)
 		return false;
 
-	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
+	auto weak =  weak_from_this();
+	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send(weak);
 	overlapped->SetMsg(msg);
 
 	WSABUF wsa_buf[2];
@@ -156,10 +161,12 @@ bool BASocket::Accept()
 		return false;
 	}
 
-	auto client = BA_NEW BASocket();
+	auto client = BASocket::CreateSocket();
 	client->InitSocket();
 
-	BAOverlapped_Accept* overlapped = BA_NEW BAOverlapped_Accept((ULONG_PTR)client);
+	auto weak = weak_from_this();
+	BAOverlapped_Accept* overlapped = BA_NEW BAOverlapped_Accept(weak);
+	overlapped->SetClient(client);
 	
 	WSABUF wsa_buf;
 	client->_recv_buf.GetRecvWsaBuf(&wsa_buf, 1);
@@ -167,13 +174,12 @@ bool BASocket::Accept()
 	if (false == lpfn_acceptEx(_socket, client->GetSocket(), wsa_buf.buf,
 		0,
 		sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
-		NULL, (LPOVERLAPPED)overlapped))
+		NULL, overlapped))
 	{
 		int error_code = WSAGetLastError();
 		if (ERROR_IO_PENDING != error_code)
 		{
 			ErrorLog("AcceptEx failed with error: %u", error_code);
-			//overlapped 가 해제될때 client는 자동 해제된다.
 			BA_DELETE(overlapped)
 
 			return false;
@@ -183,9 +189,42 @@ bool BASocket::Accept()
 	return true;
 }
 
-void BASocket::Connect(const SOCKADDR_IN& sock_addr)
+bool BASocket::Connect(const SOCKADDR_IN& sock_addr)
 {
-	
+	LPFN_CONNECTEX lpfn_connectEx = NULL;
+	GUID guid_connectEx = WSAID_CONNECTEX;
+
+	DWORD dw_bytes;
+	if (SOCKET_ERROR == WSAIoctl(_socket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&guid_connectEx, sizeof(guid_connectEx),
+		&lpfn_connectEx, sizeof(lpfn_connectEx),
+		&dw_bytes, NULL, NULL))
+	{
+		ErrorLog("WSAIoctl Failed");
+		return false;
+	}
+
+	SOCKADDR_IN dummy_addr;
+	ZeroMemory(&dummy_addr, sizeof(dummy_addr));
+	dummy_addr.sin_family = sock_addr.sin_family;
+	::bind(_socket, (sockaddr*)&dummy_addr, sizeof(dummy_addr));
+
+	auto weak = weak_from_this();
+	BAOverlapped_Connect* overlapped = BA_NEW BAOverlapped_Connect(weak);
+	DWORD byte = 0;
+	if (false == lpfn_connectEx(_socket, (struct sockaddr*)&sock_addr, sizeof(SOCKADDR_IN), NULL, NULL, &byte, overlapped))
+	{
+		int error_code = WSAGetLastError();
+		if (ERROR_IO_PENDING != error_code)
+		{
+			ErrorLog("ConnectEx failed with error: %u", error_code);
+			BA_DELETE(overlapped)
+
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void BASocket::Close()
@@ -203,7 +242,7 @@ bool BASocket::InitSocket()
 
 	_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (_socket == INVALID_SOCKET) {
-		ErrorLog("Create Client Socket Failed");
+		ErrorLog("Init Socket Failed");
 		return false;
 	}
 
@@ -212,18 +251,18 @@ bool BASocket::InitSocket()
 
 void BASocket::OnAccept(DWORD trans_byte)
 {
-	_recv_buf.UpdateRecv(trans_byte);
+	_recv_buf.UpdateRecv((sizeof(sockaddr_in) + 16) * 2);
 
-	char buf[MAX_PACKET_SIZE];
-	Read(buf, trans_byte);
+	char buf[200];
+	_recv_buf.Read(buf, (sizeof(sockaddr_in) + 16) * 2);
 	sockaddr_in* local_addr = reinterpret_cast<sockaddr_in*>(buf);
 	sockaddr_in* remote_addr = reinterpret_cast<sockaddr_in*>(buf + sizeof(sockaddr_in) + 16);
 
-	char local_ip[200] = { 0, };
-	char remote_ip[200] = { 0, };
-
-	inet_ntop(AF_INET, &local_addr->sin_addr, local_ip, 200);
-	inet_ntop(AF_INET, &remote_addr->sin_addr, remote_ip, 200);
+	TCHAR local_ip[200] = { 0, };
+	TCHAR remote_ip[200] = { 0, };
+	
+	InetNtop(AF_INET, &local_addr->sin_addr, local_ip, 200);
+	InetNtop(AF_INET, &remote_addr->sin_addr, remote_ip, 200);
 	InfoLog("Server IP [%s] Client IP [%s] Connect", local_ip, remote_ip);
 
 	Recv();
@@ -250,17 +289,8 @@ void BASocket::OnRecv(DWORD trans_byte)
 	}
 }
 
-void BASocket::OnSend(DWORD trans_byte, ULONG_PTR key)
+void BASocket::OnSend(DWORD trans_byte)
 {
-	if (FALSE == _recv_buf.UpdateSend(trans_byte))
-	{
-		ErrorLog("[%s] Never come in!", __FUNCTION__);
-		Close();
-	}
-	else
-	{
-		_session->OnSend(key);
-	}
 }
 
 bool BASocket::Peek(void* msg, __int32 size)
@@ -288,4 +318,13 @@ __int32 BASocket::Read(std::shared_ptr<NetMessage>& msg)
 	_recv_buf.Read(&msg->_data, recv_size);
 
 	return recv_size;
+}
+
+void BASocket::SetOptions(SocketOption option)
+{
+	setsockopt(_socket, SOL_SOCKET, SO_RCVBUF, (char*)&option._recv_buf_size, sizeof(option._recv_buf_size));
+	setsockopt(_socket, SOL_SOCKET, SO_SNDBUF, (char*)&option._send_buf_size, sizeof(option._send_buf_size));
+
+	int nodelay = 1;
+	setsockopt(_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
 }

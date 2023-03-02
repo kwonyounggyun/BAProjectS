@@ -1,25 +1,34 @@
 #pragma once
 #include "BACore.h"
 #include "BANetworkBuffer.h"
+#include "NetMessage.h"
+#include "BAObject.h"
 
-class BASession;
-class BASocket
+struct SocketOption
 {
-	friend class BANetworkEngine;
+	int _recv_buf_size;
+	int _send_buf_size;
+	bool _keep_alive;
+};
+
+class NetMessage;
+class BASession;
+class BASocket : public BAObject<BASocket>
+{
 	friend class BASession;
 
 private:
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
-	
+
 	std::shared_ptr<BASession> _session;
-	
+	BASocket() : _socket(INVALID_SOCKET) {}
+
 public:
-	BASocket();
+	static std::shared_ptr<BASocket> CreateSocket();
 	~BASocket();
 	const SOCKET GetSocket() { return _socket; }
 
-private:
 	void SetSession(std::shared_ptr<BASession>& session) { _session = session; }
 	bool Recv();
 	//bool Send(void* msg, __int32 size);
@@ -29,18 +38,19 @@ private:
 	bool Bind(const SOCKADDR_IN& sock_addr);
 	bool Listen(int backlog);
 	bool Accept();
-	void Connect(const SOCKADDR_IN& sock_addr);
+	bool Connect(const SOCKADDR_IN& sock_addr);
 	
 	void Close();
 	bool InitSocket();
 
 	__int32 Read(std::shared_ptr<NetMessage>& msg);
 
+	void SetOptions(SocketOption option);
+
 public:
-	//匙飘况农 贸府侩
 	void OnAccept(DWORD trans_byte);
 	void OnRecv(DWORD trans_byte);
-	void OnSend(DWORD trans_byte, ULONG_PTR key);
+	void OnSend(DWORD trans_byte);
 
 public:
 	bool Readable(__int32 size) { return _recv_buf.Readable(size); }

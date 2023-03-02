@@ -7,30 +7,15 @@ void __stdcall WorkThread(void* p)
 	network->Loop();
 }
 
-bool BANetworkEngine::AcceptSocket()
-{
-	if (false == _listen_socket.Accept())
-		return false;
-
-	return true;
-}
-
-bool BANetworkEngine::RegistSocket(ULONG_PTR key)
+bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
 {
 	BASmartCS lock(&_cs);
 
-	auto socket = std::shared_ptr<BASocket>((BASocket*)key);
+	auto key = (ULONG_PTR)socket.get();
 
-	auto iocp_result = CreateIoCompletionPort((HANDLE)socket->GetSocket(), _iocp_handle, (ULONG_PTR)socket.get(), 0);
-	if (iocp_result == NULL)
-	{
-		ErrorLog("Iocp failed to register the client. ErrorCode[%d]", GetLastError());
-		return false;
-	}
+	auto result = _sockets.insert(std::make_pair(key, socket));
 
-	_sockets.insert(std::make_pair(key, socket));
-
-	return true;
+	return result.second;
 }
 
 bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
@@ -44,30 +29,43 @@ bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
 	return true;
 }
 
-void BANetworkEngine::OnAccept(ULONG_PTR key, DWORD trans_byte)
+void BANetworkEngine::OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client, DWORD trans_byte)
 {
-	BASmartCS lock(&_cs);
+	auto iter = _network_configs.find(key);
+	if(iter != _network_configs.end())
+		client->SetOptions(iter->second._option);
 
-	auto iter = _sockets.find(key);
-	if (iter != _sockets.end())
+	auto iocp_result = CreateIoCompletionPort((HANDLE)client->GetSocket(), _iocp_handle, key, 0);
+	if (iocp_result == NULL)
+	{
+		ErrorLog("Iocp failed to register the client. ErrorCode[%d]", GetLastError());
 		return;
+	}
 
-	if (false == RegistSocket(key))
+	if (false == RegistSocket(client))
 		return;
-
-	//여기오면 무조건 잇어야함
-	iter = _sockets.find(key);
-	auto socket = iter->second;
 
 	auto session = std::make_shared<BASession>();
-	session->SetSocket(socket);
-	socket->SetSession(session);
-	socket->OnAccept(trans_byte);
+	session->SetSocket(client);
+	client->SetSession(session);
+	client->OnAccept(trans_byte);
 		
 	OnAcceptComplete(session);
 }
 
-bool BANetworkEngine::Initialize()
+void BANetworkEngine::OnConnect(std::shared_ptr<BASocket>& connect, DWORD trans_byte)
+{
+	if (false == RegistSocket(connect))
+		return;
+
+	auto session = std::make_shared<BASession>();
+	session->SetSocket(connect);
+	connect->SetSession(session);
+
+	OnConnectComplete(session);
+}
+
+bool BANetworkEngine::Initialize(std::vector<NetworkConfig>& configs)
 {
 	WSADATA wsa_data;
 	if (0 != WSAStartup(MAKEWORD(2, 2), &wsa_data))
@@ -76,46 +74,68 @@ bool BANetworkEngine::Initialize()
 		return false;
 	}
 
+	_state = true;
+
 	_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
 	if (_iocp_handle == NULL) {
 		ErrorLog("CreateIoCompletionPort failed with error: %u\n", GetLastError());
 		return false;
 	}
 
-	if (false == _listen_socket.InitSocket())
+	for (auto listen_config : configs)
 	{
-		ErrorLog("Create Listen Socket Failed");
-		return false;
+		auto listen_socket = BASocket::CreateSocket();
+		if (false == listen_socket->InitSocket())
+		{
+			ErrorLog("Create Listen Socket Failed");
+			return false;
+		}
+
+		auto iocp_result = CreateIoCompletionPort((HANDLE)listen_socket->GetSocket(), _iocp_handle, (ULONG_PTR)listen_socket.get(), 0);
+		if (iocp_result == NULL)
+		{
+			ErrorLog("CreateIoCompletionPort listen socket regist failed!");
+			return false;
+		}
+
+		SOCKADDR_IN server_addr;
+		memset(&server_addr, 0x00, sizeof(server_addr));
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_port = htons(listen_config._port);
+		server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+
+
+		if (false == listen_socket->Bind(server_addr))
+			return false;
+
+		if (false == listen_socket->Listen(5))
+			return false;
+
+		_network_configs.insert(std::make_pair((ULONG_PTR)listen_socket.get(), listen_config));
+		_sockets.insert(std::make_pair((ULONG_PTR)listen_socket.get(), listen_socket));
 	}
-
-	auto iocp_result = CreateIoCompletionPort((HANDLE)_listen_socket.GetSocket(), _iocp_handle, (ULONG_PTR)0, 0);
-	if (iocp_result == NULL)
-	{
-		ErrorLog("CreateIoCompletionPort listen socket regist failed!");
-		return false;
-	}
-
-	SOCKADDR_IN server_addr;
-	memset(&server_addr, 0x00, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(9999);
-	server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-
-	if (false == _listen_socket.Bind(server_addr))
-		return false;
-
-	if (false == _listen_socket.Listen(5))
-		return false;
 
 	return true;
 }
 
-bool BANetworkEngine::StartNetwork()
+bool BANetworkEngine::StartNetwork(int thread_count)
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < thread_count; i++)
 	{
 		std::thread* t = BA_NEW std::thread(WorkThread, this);
 		_threads.push_back(t);
+	}
+
+	for (auto listen : _network_configs)
+	{
+		auto find = _sockets.find(listen.first);
+		if (find == _sockets.end())
+			return false;
+
+		auto listen_socket = find->second;
+		auto config = listen.second;
+		for(int i = 0; i< config._max_client; i++)
+			listen_socket->Accept();
 	}
 
 	InfoLog("Start Network");
@@ -123,12 +143,32 @@ bool BANetworkEngine::StartNetwork()
 	return true;
 }
 
+bool BANetworkEngine::Connect(const SOCKADDR_IN& sock_addr, const SocketOption& option)
+{
+	auto connect_socket = BASocket::CreateSocket();
+	if (false == connect_socket->InitSocket())
+		return false;
+
+	connect_socket->SetOptions(option);
+
+	auto iocp_result = CreateIoCompletionPort((HANDLE)connect_socket->GetSocket(), _iocp_handle, (ULONG_PTR)connect_socket.get(), 0);
+	if (iocp_result == NULL)
+	{
+		ErrorLog("CreateIoCompletionPort connect socket regist failed!");
+		return false;
+	}
+
+	if (false == connect_socket->Connect(sock_addr))
+		return false;
+
+	return true;
+}
+
 bool BANetworkEngine::Release()
 {
-	state = false;
+	_state = false;
 
-	_listen_socket.Close();
-
+	_network_configs.clear();
 	_sockets.clear();
 
 	for (auto worker : _threads)
@@ -143,7 +183,7 @@ bool BANetworkEngine::Release()
 
 void BANetworkEngine::Loop()
 {
-	while (state)
+	while (_state)
 	{
 		DWORD trans_byte = 0;
 		ULONG_PTR completion_key = 0;
@@ -153,15 +193,14 @@ void BANetworkEngine::Loop()
 		{
 			if (overlapped != NULL)
 			{
-				//상대방 비정상 종료
-				ErrorLog("GetQueuedCompletionStatus Failed");
-				UnregistSocket(completion_key);
+				ErrorLog("Client unexpected termination!!");
+				UnregistSocket((ULONG_PTR)overlapped->GetSocket().get());
 
-				BA_DELETE(overlapped)
+				OverlappedTaskSeparator::Delete(overlapped);
 			}
 			else
 			{
-				//완료포트 핸들이 닫힌 경우 스레드 종료
+				//IOCP close
 				if (GetLastError() == ERROR_ABANDONED_WAIT_0)
 				{
 					ErrorLog("CompletionPort is not valid");
@@ -171,10 +210,9 @@ void BANetworkEngine::Loop()
 
 			continue;
 		}
+
 		overlapped->SetEngine(this);
 		overlapped->SetTransByte(trans_byte);
-		overlapped->CompleteIO();
-
-		BA_DELETE(overlapped)
+		OverlappedTaskSeparator::Work(overlapped);
 	}
 }
