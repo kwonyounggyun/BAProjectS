@@ -1,30 +1,12 @@
 #pragma once
 #include "BACore.h"
 
-/*
-* 패킷은 모두 이녀석을 통한다.
-* 생성 exaple) 
-* auto msg = NetMessage::CreateMsg();
-* msg->
-* auto packet = msg->GetBuffer<PACKET_TYPE>();
-*/
-
-struct Header
-{
-	DWORD _size;
-	DWORD _protocol;
-};
 
 #pragma pack(push, 1)
-struct Message
+struct Data
 {
-	WORD _size;
-	char _array[MAX_PACKET_SIZE + HEADER_SIZE + PACKET_PADDING];
-
-	Message() : _size(sizeof(_array))
-	{
-		ZeroMemory(_array, sizeof(_array));
-	}
+	DWORD _protocol;
+	char _array[MAX_PACKET_SIZE + PACKET_PADDING];
 };
 #pragma pack(pop)
 
@@ -33,27 +15,29 @@ struct Message
 */
 class NetMessage
 {
+	friend class BASocket;
 private:
-	Header* _header;
-	char* _buf;
-	Message _msg;
+	ULONG _size;
+	Data _data;
 	
 	void Encrypt();
 	void Decrypt();
 public:
-	explicit NetMessage() : _header((Header*)_msg._array), _buf(_msg._array + sizeof(Header))
+	explicit NetMessage() : _size(sizeof(Data))
 	{
+		ZeroMemory(&_data, sizeof(Data));
 	};
 
 	static std::shared_ptr<NetMessage> CreateMsg();
 
 	template<typename T>
-	T* GetBuffer() { return reinterpret_cast<T>(_buf); }
+	T* GetBuffer() { return reinterpret_cast<T>(_data._array); }
 
-	WORD GetSize() { return sizeof(_msg._size) + _msg._size; }
+	WORD GetSize() { return _size - sizeof(_size); }
 
 	template<typename T>
-	void SetSize() { _msg._size = reinterpret_cast<T>(_buf).GetSize(); }
+	void SetSize() { _size = sizeof(_size) + reinterpret_cast<T>(_data._array).GetSize(); }
 
-	Header* GetHeader() { return _header; }
+	DWORD GetProtocol() { return _data._protocol; }
+	void SetProtocol(DWORD protocol) { _data._protocol = protocol; }
 };
