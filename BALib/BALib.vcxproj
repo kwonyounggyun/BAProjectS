@@ -44,6 +44,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -70,6 +71,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>../Lib/$(Platform)\$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)D</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>../Lib/$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -118,6 +126,8 @@
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\Lib\$(Platform)\$(Configuration);</AdditionalLibraryDirectories>
+      <AdditionalDependencies>BACoreD.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
       <AdditionalDependencies>BACoreD.lib</AdditionalDependencies>
@@ -153,11 +163,30 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ActorManager.h" />
+    <ClInclude Include="BAAction.h" />
+    <ClInclude Include="BAActionAgent.h" />
+    <ClInclude Include="BAActor.h" />
+    <ClInclude Include="BAPacket.h" />
+    <ClInclude Include="BAPacket_User.h" />
+    <ClInclude Include="BAPlayer.h" />
+    <ClInclude Include="BaseFrame.h" />
+    <ClInclude Include="BAType.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="GameServer.h" />
+    <ClInclude Include="NetPlayerHandler.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ActorManager.cpp" />
+    <ClCompile Include="BAAction.cpp" />
+    <ClCompile Include="BAActionAgent.cpp" />
+    <ClCompile Include="BAActor.cpp" />
     <ClCompile Include="BALib.cpp" />
+    <ClCompile Include="BAPlayer.cpp" />
+    <ClCompile Include="BaseFrame.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="NetPlayerHandler.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
