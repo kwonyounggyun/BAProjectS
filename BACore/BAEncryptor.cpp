@@ -1,17 +1,16 @@
 #include "BAEncryptor.h"
+#include <memory>
 
 char key = 127;
 
-int BAEncryptor::Encrypt(char* dst, char* src, int src_len)
+int BAEncryptor::Encrypt(void* dst, int dst_len, void* src, int src_len)
 {
-    for (;;)
-    {
-    }
-    
-    return 0;
+    memcpy_s(dst, dst_len, src, src_len);
+    return src_len;
 }
 
-int BAEncryptor::Decrypt(char* dst, char* src, int src_len)
+int BAEncryptor::Decrypt(void* dst, int dst_len, void* src, int src_len)
 {
-    return 0;
+    memcpy_s(dst, dst_len, src, src_len);
+    return src_len;
 }

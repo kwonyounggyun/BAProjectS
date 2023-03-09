@@ -1,13 +1,13 @@
 #pragma once
 
+#pragma comment(lib, "ws2_32.lib")
 #include <WinSock2.h>
 #include <mswsock.h>
 #include <Windows.h>
 #include <ws2tcpip.h>
 #include <thread>
-#include <iostream>
 
-#pragma comment(lib, "ws2_32.lib")
+#include <iostream>
 
 #include <algorithm>
 #include <tchar.h>
@@ -16,6 +16,8 @@
 #include <set>
 #include <unordered_map>
 #include <atomic>
+#include <queue>
+#include <functional>
 
 #include "BACriticalSection.h"
 #include "BAMemoryPool.h"

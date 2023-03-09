@@ -1,9 +1,13 @@
 #pragma once
-#include "BACore.h"
-#include "BASocket.h"
-#include "BASession.h"
-#include "BAOverlapped.h"
 
+#include "BAOverlapped.h"
+#include "BASocket.h"
+#include "BACore.h"
+#include "BASession.h"
+#include "BAThread.h"
+
+class BASocket;
+class BASession;
 struct NetworkConfig
 {
 public:
@@ -11,18 +15,19 @@ public:
 	bool _filter;
 	std::vector<std::string> _filter_ip;
 	int _max_client;
-
+	bool _encrypt;
 	SocketOption _option;
 };
 
 class BANetworkEngine
 {
 private:
-	bool _state;
+	std::atomic_bool _condition;
 
 	std::map<ULONG_PTR, NetworkConfig> _network_configs;
 	std::map<ULONG_PTR, std::shared_ptr<BASocket>> _sockets;
-	std::vector<std::thread*> _threads;
+	//std::vector<std::thread*> _threads;
+	std::vector<std::shared_ptr<BAThread>> _threads;
 
 	HANDLE _iocp_handle;
 
@@ -33,17 +38,24 @@ private:
 	bool UnregistSocket(ULONG_PTR key);
 
 public:
+	BANetworkEngine() : _condition(false), _iocp_handle(NULL) {}
+	virtual ~BANetworkEngine() {}
+
+	HANDLE GetIOCPHandle() { return _iocp_handle; }
+	void OnClose(std::shared_ptr<BASocket>& socket);
 	void OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client, DWORD trans_byte);
 	void OnConnect(std::shared_ptr<BASocket>& connect, DWORD trans_byte);
+
+	bool Connect(const SOCKADDR_IN& sock_addr, const SocketOption& option);
+
+protected:
 	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session) = 0;
 	virtual void OnConnectComplete(std::shared_ptr<BASession>& session) = 0;
 
 public:
-
-	bool Initialize(std::vector<NetworkConfig>& configs);
-	bool StartNetwork(int thread_count);
-	bool Connect(const SOCKADDR_IN& sock_addr, const SocketOption& option);
-	bool Release();
+	virtual bool Initialize(std::vector<NetworkConfig>& configs);
+	virtual bool StartNetwork(int thread_count);
+	virtual bool Release();
 
 	virtual void RecvPacketProcess(NetMessage* msg) { delete msg; }
 	

@@ -1,29 +1,30 @@
 #include "BAThread.h"
 
-void BAThread::EnqueueMsg(std::weak_ptr<NetMessage> msg)
+void Work(std::atomic_bool* state, std::function<void(std::atomic_bool*)> call)
 {
-	BASmartCS lock(&_cs);
-	_msg_queue.push_back(std::move(msg));
+	call(state);
+
+	return;
 }
 
-void BAThread::ProcessMsg()
+void BAThread::Run(std::function<void(std::atomic_bool*)> call)
 {
-	std::list<std::weak_ptr<NetMessage>> process_msg;
-	{
-		BASmartCS lock(&_cs);
-		process_msg.assign(_msg_queue.begin(), _msg_queue.end());
-	}
-
-	for (auto iter = process_msg.begin(); iter != process_msg.end(); iter++)
-	{
-		*iter
-	}
-
-	
+	_state.store(true, std::memory_order_release);
+	_thread = BA_NEW std::thread(Work, &_state, call);
 }
 
-void BAThread::Process()
+void BAThread::Stop()
 {
-	ProcessMsg();
-	Update();
+	_state.store(false);
+}
+
+void BAThread::Join()
+{
+	if (_thread != nullptr)
+	{
+		_thread->join();
+		BA_DELETE(_thread)
+		InfoLog("thread stop!!");
+		_thread = nullptr;
+	}
 }

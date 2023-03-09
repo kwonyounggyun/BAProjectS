@@ -17,24 +17,23 @@ private:
 	ULONG _size;
 	Data _data;
 	
-	void Encrypt();
-	void Decrypt();
-public:
 	explicit NetMessage() : _size(sizeof(Data))
 	{
 		ZeroMemory(&_data, sizeof(Data));
 	};
-
+public:
 	static std::shared_ptr<NetMessage> CreateMsg();
 
 	template<typename T>
-	T* GetBuffer() { return reinterpret_cast<T>(_data._array); }
+	T* GetBuffer() { return reinterpret_cast<T*>(_data._array); }
 
-	ULONG GetSize() { return _size - sizeof(_size); }
+	ULONG GetSize() { return _size; }
 
-	template<typename T>
-	void SetSize() { _size = sizeof(_size) + reinterpret_cast<T>(_data._array).GetSize(); }
+	void SetSize(ULONG size) { _size = sizeof(_data._protocol) + size; }
 
 	DWORD GetProtocol() { return _data._protocol; }
 	void SetProtocol(DWORD protocol) { _data._protocol = protocol; }
+
+	void Encrypt();
+	void Decrypt();
 };

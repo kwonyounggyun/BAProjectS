@@ -32,7 +32,7 @@ public:
 class CLog
 {
 public:
-	static BOOL WriteLog(LogType::en type, const TCHAR* data, ...)
+	static bool WriteLog(LogType::en type, const TCHAR* data, ...)
 	{
 		SYSTEMTIME SystemTime;
 		TCHAR CurrentDate[32] = { 0, };
@@ -48,12 +48,12 @@ public:
 		va_end(ap);
 
 		GetLocalTime(&SystemTime);
-		_sntprintf_s(CurrentDate, 32, _T("%d-%d-%d %d:%d:%d"), SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay, SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
-		_sntprintf_s(CurrentFileName, MAX_PATH, _T("LOG_%d-%d-%d %d.log"), SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay, SystemTime.wHour);
+		_sntprintf_s(CurrentDate, 32, _T("%04d-%02d-%02d %02d:%02d:%02d"), SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay, SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+		_sntprintf_s(CurrentFileName, MAX_PATH, _T("LOG_%02d-%02d-%02d %02d.log"), SystemTime.wYear, SystemTime.wMonth, SystemTime.wDay, SystemTime.wHour);
 
 		_tfopen_s(&FilePtr, CurrentFileName, _T("a"));
 		if (!FilePtr)
-			return FALSE;
+			return false;
 
 		_ftprintf(FilePtr, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
 		_sntprintf_s(DebugLog, MAX_LOG_LENGTH, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
@@ -63,6 +63,6 @@ public:
 
 		OutputDebugString(DebugLog);
 		_tprintf(_T("%s"), DebugLog);
-		return TRUE;
+		return true;
 	}
 };

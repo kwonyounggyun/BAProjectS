@@ -13,7 +13,7 @@ struct SocketOption
 
 class NetMessage;
 class BASession;
-class BASocket : public BAObject<BASocket>
+class BASocket : public BASharedObject<BASocket>
 {
 	friend class BASession;
 
@@ -46,9 +46,11 @@ public:
 	__int32 Read(std::shared_ptr<NetMessage>& msg);
 
 	void SetOptions(SocketOption option);
+	void Shutdown();
 
 public:
 	void OnAccept(DWORD trans_byte);
+	void OnConnect(DWORD trans_byte);
 	void OnRecv(DWORD trans_byte);
 	void OnSend(DWORD trans_byte);
 

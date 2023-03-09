@@ -1,17 +1,13 @@
 #pragma once
 
-template<typename T, typename ... types>
+template<typename T>
 class BASingleton
 {
-private:
-	static T* _instance;
-
 public:
-	static const T* GetInstance()
+	static T* const GetInstance()
 	{
-		if (_instance == nullptr)
-			_instance = new T(types);
-
-		return _instance;
+		static T _instance;
+		
+		return &_instance;
 	}
 };

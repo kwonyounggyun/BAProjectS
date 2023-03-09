@@ -1,5 +1,4 @@
 #include "BANetworkEngine.h"
-#include "BASession.h"
 
 void __stdcall WorkThread(void* p)
 {
@@ -29,11 +28,20 @@ bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
 	return true;
 }
 
+void BANetworkEngine::OnClose(std::shared_ptr<BASocket>& socket)
+{
+	socket->Close();
+	UnregistSocket((ULONG_PTR)socket.get());
+	InfoLog("Socket Close");
+}
+
 void BANetworkEngine::OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client, DWORD trans_byte)
 {
 	auto iter = _network_configs.find(key);
-	if(iter != _network_configs.end())
-		client->SetOptions(iter->second._option);
+	if (iter == _network_configs.end())
+		return;
+
+	client->SetOptions(iter->second._option);
 
 	auto iocp_result = CreateIoCompletionPort((HANDLE)client->GetSocket(), _iocp_handle, key, 0);
 	if (iocp_result == NULL)
@@ -47,6 +55,7 @@ void BANetworkEngine::OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client,
 
 	auto session = std::make_shared<BASession>();
 	session->SetSocket(client);
+	session->SetEncryt(iter->second._encrypt);
 	client->SetSession(session);
 	client->OnAccept(trans_byte);
 		
@@ -74,7 +83,7 @@ bool BANetworkEngine::Initialize(std::vector<NetworkConfig>& configs)
 		return false;
 	}
 
-	_state = true;
+	_condition.store(true);
 
 	_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
 	if (_iocp_handle == NULL) {
@@ -122,8 +131,47 @@ bool BANetworkEngine::StartNetwork(int thread_count)
 {
 	for (int i = 0; i < thread_count; i++)
 	{
-		std::thread* t = BA_NEW std::thread(WorkThread, this);
-		_threads.push_back(t);
+		/*std::thread* t = BA_NEW std::thread(WorkThread, this);
+		_threads.push_back(t);*/
+		auto engine = this;
+		auto thread = std::make_shared<BAThread>();
+		thread->Run([engine](std::atomic_bool* state)->void {
+			while ((*state).load())
+			{
+				DWORD trans_byte = 0;
+				ULONG_PTR completion_key = 0;
+				BAOverlapped* overlapped = nullptr;
+
+				if (false == GetQueuedCompletionStatus(engine->GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
+				{
+					if (overlapped != NULL)
+					{
+						ErrorLog("Client unexpected termination!!");
+						auto socket = overlapped->GetSocket();
+						if (socket != nullptr)
+							engine->OnClose(socket);
+
+						OverlappedTaskSeparator::Delete(overlapped);
+					}
+					else
+					{
+						//IOCP close
+						if (GetLastError() == ERROR_ABANDONED_WAIT_0)
+						{
+							InfoLog("CompletionPort Error");
+							break;
+						}
+					}
+
+					continue;
+				}
+
+				overlapped->SetEngine(engine);
+				overlapped->SetTransByte(trans_byte);
+				OverlappedTaskSeparator::Work(overlapped);
+			}
+			});
+		_threads.push_back(thread);
 	}
 
 	for (auto listen : _network_configs)
@@ -166,15 +214,18 @@ bool BANetworkEngine::Connect(const SOCKADDR_IN& sock_addr, const SocketOption& 
 
 bool BANetworkEngine::Release()
 {
-	_state = false;
+	_condition.store(false);
 
 	_network_configs.clear();
-	_sockets.clear();
+	for (auto pair : _sockets)
+	{
+		pair.second->Shutdown();
+	}
 
 	for (auto worker : _threads)
 	{
-		worker->join();
-		BA_DELETE(worker);
+		worker->Stop();
+		worker->Join();
 	}
 	_threads.clear();
 
@@ -183,18 +234,20 @@ bool BANetworkEngine::Release()
 
 void BANetworkEngine::Loop()
 {
-	while (_state)
+	while (1)
 	{
 		DWORD trans_byte = 0;
 		ULONG_PTR completion_key = 0;
 		BAOverlapped* overlapped = nullptr;
 
-		if (false == GetQueuedCompletionStatus(_iocp_handle, &trans_byte, &completion_key, (LPOVERLAPPED*) &overlapped, INFINITE))
+		if (false == GetQueuedCompletionStatus(_iocp_handle, &trans_byte, &completion_key, (LPOVERLAPPED*) &overlapped, 500))
 		{
 			if (overlapped != NULL)
 			{
 				ErrorLog("Client unexpected termination!!");
-				UnregistSocket((ULONG_PTR)overlapped->GetSocket().get());
+				auto socket = overlapped->GetSocket();
+				if(socket != nullptr)
+					OnClose(socket);
 
 				OverlappedTaskSeparator::Delete(overlapped);
 			}
@@ -203,7 +256,7 @@ void BANetworkEngine::Loop()
 				//IOCP close
 				if (GetLastError() == ERROR_ABANDONED_WAIT_0)
 				{
-					ErrorLog("CompletionPort is not valid");
+					InfoLog("CompletionPort Error");
 					break;
 				}
 			}

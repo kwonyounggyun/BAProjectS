@@ -4,18 +4,29 @@
 
 void BAOverlapped_Recv::CompleteIO()
 {
-	std::shared_ptr<BASocket> socket = std::reinterpret_pointer_cast<BASocket>(_object);
-	socket->OnRecv(_trans_byte);
+	if (auto socket = _socket.lock())
+	{
+		if (_trans_byte != 0)
+			socket->OnRecv(_trans_byte);
+		else
+			_engine->OnClose(socket);
+	}
 }
 
 void BAOverlapped_Send::CompleteIO()
 {
-	std::shared_ptr<BASocket> socket = std::reinterpret_pointer_cast<BASocket>(_object);
-	socket->OnSend(_trans_byte, _msg_key);
+	if (auto socket = _socket.lock())
+		socket->OnSend(_trans_byte);
 }
-
+	
 void BAOverlapped_Accept::CompleteIO()
 {
-	BASocket* socket = reinterpret_cast<BASocket*>(_object);
-	_engine->OnAccept(socket, _trans_byte);
+	if (auto socket = _socket.lock())
+		_engine->OnAccept((ULONG_PTR)socket.get(), _client, _trans_byte);
+}
+
+void BAOverlapped_Connect::CompleteIO()
+{
+	_engine->OnConnect(_connect, _trans_byte);
+	_connect->OnConnect(_trans_byte);
 }

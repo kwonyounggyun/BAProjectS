@@ -36,22 +36,19 @@
     <ClCompile Include="BASession.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BAConnection.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="BAEncryptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="NetMessage.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="SerializedObject.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="BAObject.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
     <ClCompile Include="BAThread.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BATaskFrame.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BABaseFrame.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -98,22 +95,28 @@
     <ClInclude Include="BASession.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BAConnection.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="BACore.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BAEncryptor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="BAQueue.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SerializedObject.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BAObject.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkHandler.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="BAThread.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BATaskFrame.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BABaseFrame.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

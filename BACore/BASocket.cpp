@@ -268,10 +268,20 @@ void BASocket::OnAccept(DWORD trans_byte)
 	Recv();
 }
 
+void BASocket::OnConnect(DWORD trans_byte)
+{
+	_recv_buf.UpdateRecv(trans_byte);
+	char buf[200] = {0,};
+	_recv_buf.Read(buf, trans_byte);
+	InfoLog("connect [%s]", buf);
+	Recv();
+}
+
 void BASocket::OnRecv(DWORD trans_byte)
 {
 	if (trans_byte == 0)
 	{
+		InfoLog("[%d] Socket Close", _socket);
 		Close();
 	}
 	else
@@ -327,4 +337,15 @@ void BASocket::SetOptions(SocketOption option)
 
 	int nodelay = 1;
 	setsockopt(_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
+
+	struct linger opt;
+	opt.l_onoff = 1;
+	opt.l_linger = 0;
+
+	setsockopt(_socket, SOL_SOCKET, SO_LINGER, (char*)&opt, sizeof(opt));
+}
+
+void BASocket::Shutdown()
+{
+	::shutdown(_socket, SD_SEND);
 }
