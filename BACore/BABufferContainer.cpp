@@ -106,7 +106,7 @@ bool BABufferContainer::Peek(void* buf, __int32 len)
     {
         __int32 node_remain_read_size = node->_buffer.GetReadableSize();
 
-        if (node_remain_read_size <= remain)
+        if (node_remain_read_size < remain)
         {
             node->_buffer.Peek(msg_buf + len - remain, node_remain_read_size);
             remain -= node_remain_read_size;
@@ -115,7 +115,7 @@ bool BABufferContainer::Peek(void* buf, __int32 len)
         else
         {
             node->_buffer.Peek(msg_buf + len - remain, remain);
-            remain = 0;
+            break;
         }
     } while (remain > 0);
 

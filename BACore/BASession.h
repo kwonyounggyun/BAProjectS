@@ -19,13 +19,15 @@ private:
 	bool _encryt;
 	std::weak_ptr<INetworkObject> _object;
 
+	BACS _cs;
+
 private:
 	void SetSocket(std::shared_ptr<BASocket>& socket) { _socket = socket; }
 
 	void OnRecv();
 	void EnqueueMsg(std::shared_ptr<NetMessage>& msg);
 	void SetEncryt(bool encryt) { _encryt = encryt; }
-	bool IsEncryt() { return _encryt; }
+	bool IsEncryt() { return false; }
 
 public:
 	void SendMsg(std::shared_ptr<NetMessage>& msg);

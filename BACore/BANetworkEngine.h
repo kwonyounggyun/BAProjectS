@@ -22,11 +22,8 @@ public:
 class BANetworkEngine
 {
 private:
-	std::atomic_bool _condition;
-
 	std::map<ULONG_PTR, NetworkConfig> _network_configs;
 	std::map<ULONG_PTR, std::shared_ptr<BASocket>> _sockets;
-	//std::vector<std::thread*> _threads;
 	std::vector<std::shared_ptr<BAThread>> _threads;
 
 	HANDLE _iocp_handle;
@@ -36,9 +33,11 @@ private:
 private:
 	bool RegistSocket(std::shared_ptr<BASocket>& socket);
 	bool UnregistSocket(ULONG_PTR key);
+public:
+	bool PostCompletionPort(std::shared_ptr<BASocket>& socket, BAOverlapped* overlapped);
 
 public:
-	BANetworkEngine() : _condition(false), _iocp_handle(NULL) {}
+	BANetworkEngine() : _iocp_handle(NULL) {}
 	virtual ~BANetworkEngine() {}
 
 	HANDLE GetIOCPHandle() { return _iocp_handle; }

@@ -1,6 +1,5 @@
 #pragma once
 #include "BACore.h"
-#include "NetMessage.h"
 
 class BASocket;
 class BANetworkEngine;
@@ -46,7 +45,6 @@ public:
 class BAOverlapped_Send : public BAOverlapped
 {
 public:
-	std::shared_ptr<NetMessage> _msg;
 	DWORD _send_byte;
 public:
 	explicit BAOverlapped_Send(std::weak_ptr<BASocket>& socket) : BAOverlapped(socket) 
@@ -54,7 +52,6 @@ public:
 		_type = Overlapped_type::SEND;
 	}
 	void CompleteIO();
-	void SetMsg(std::shared_ptr<NetMessage>& msg) { _msg = msg; }
 };
 
 class BAOverlapped_Accept : public BAOverlapped

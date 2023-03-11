@@ -60,7 +60,7 @@ BOOL BANetworkBuffer::UpdateSend(INT32 trans_bytes)
 		}
 		else
 		{
-			node->_buffer._head = remain - 1;
+			node->_buffer._head += remain - 1;
 			break;
 		}
 	} while (remain > 0);
@@ -79,14 +79,15 @@ BOOL BANetworkBuffer::UpdateRecv(INT32 trans_bytes)
 	{
 		INT32 remain_writeable = node->_buffer.GetWriteableSize();
 
-		if (remain_writeable <= remain)
+		if (remain_writeable < remain)
 		{
 			remain -= remain_writeable;
+			node->_buffer._tail = node->_buffer._capacity;
 			node = node->_next;
 		}
 		else
 		{
-			node->_buffer._tail = remain;
+			node->_buffer._tail += remain;
 			_size += trans_bytes;
 			_cur_write = node;
 			return TRUE;

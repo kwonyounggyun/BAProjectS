@@ -236,6 +236,7 @@
     <ClInclude Include="BAObject.h" />
     <ClInclude Include="BAOverlapped.h" />
     <ClInclude Include="BAQueue.h" />
+    <ClInclude Include="BARandom.h" />
     <ClInclude Include="BASession.h" />
     <ClInclude Include="BAScheduler.h" />
     <ClInclude Include="BASingleton.h" />

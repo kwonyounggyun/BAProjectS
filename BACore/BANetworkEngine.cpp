@@ -1,11 +1,5 @@
 #include "BANetworkEngine.h"
 
-void __stdcall WorkThread(void* p)
-{
-	BANetworkEngine* network = static_cast<BANetworkEngine*>(p);
-	network->Loop();
-}
-
 bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
 {
 	BASmartCS lock(&_cs);
@@ -13,6 +7,10 @@ bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
 	auto key = (ULONG_PTR)socket.get();
 
 	auto result = _sockets.insert(std::make_pair(key, socket));
+	auto engine = this;
+	socket->SetPostCompletionCallback([engine](std::shared_ptr<BASocket>& sock, BAOverlapped* overlapped)->bool {
+		return engine->PostCompletionPort(sock, overlapped);
+		});
 
 	return result.second;
 }
@@ -26,6 +24,11 @@ bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
 		_sockets.erase(iter);
 
 	return true;
+}
+
+bool BANetworkEngine::PostCompletionPort(std::shared_ptr<BASocket>& socket, BAOverlapped* overlapped)
+{
+	return PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)socket.get(), overlapped);
 }
 
 void BANetworkEngine::OnClose(std::shared_ptr<BASocket>& socket)
@@ -82,8 +85,6 @@ bool BANetworkEngine::Initialize(std::vector<NetworkConfig>& configs)
 		ErrorLog("Initialize Network Failed");
 		return false;
 	}
-
-	_condition.store(true);
 
 	_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
 	if (_iocp_handle == NULL) {
@@ -142,7 +143,7 @@ bool BANetworkEngine::StartNetwork(int thread_count)
 				ULONG_PTR completion_key = 0;
 				BAOverlapped* overlapped = nullptr;
 
-				if (false == GetQueuedCompletionStatus(engine->GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
+				if (false == GetQueuedCompletionStatus(engine->GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, INFINITE))
 				{
 					if (overlapped != NULL)
 					{
@@ -214,8 +215,6 @@ bool BANetworkEngine::Connect(const SOCKADDR_IN& sock_addr, const SocketOption& 
 
 bool BANetworkEngine::Release()
 {
-	_condition.store(false);
-
 	_network_configs.clear();
 	for (auto pair : _sockets)
 	{

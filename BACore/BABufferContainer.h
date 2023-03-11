@@ -58,6 +58,7 @@ public:
     bool PushNode();
     bool Readable(size_t size) { return _size >= (__int64)size; }
     bool Readable() { return _size > 0; }
+    __int64 GetSize() { return _size; }
 
 protected:
     std::shared_ptr<BABufferUnitNode> _cur_read;

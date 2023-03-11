@@ -8,28 +8,29 @@ struct Data
 	DWORD _protocol;
 	char _array[MAX_PACKET_SIZE + PACKET_PADDING];
 };
-#pragma pack(pop)
 
 class NetMessage
 {
+	friend class BASession;
 	friend class BASocket;
 private:
-	ULONG _size;
+	DWORD _size;
 	Data _data;
 	
 	explicit NetMessage() : _size(sizeof(Data))
 	{
 		ZeroMemory(&_data, sizeof(Data));
 	};
+
+	DWORD TotalSize() { return _size; }
 public:
 	static std::shared_ptr<NetMessage> CreateMsg();
 
 	template<typename T>
 	T* GetBuffer() { return reinterpret_cast<T*>(_data._array); }
 
-	ULONG GetSize() { return _size; }
-
-	void SetSize(ULONG size) { _size = sizeof(_data._protocol) + size; }
+	DWORD GetSize() { return _size - sizeof(_data._protocol) - sizeof(_size); }
+	void SetSize(DWORD size) { _size = size + sizeof(_data._protocol) + sizeof(_size); }
 
 	DWORD GetProtocol() { return _data._protocol; }
 	void SetProtocol(DWORD protocol) { _data._protocol = protocol; }
@@ -37,3 +38,4 @@ public:
 	void Encrypt();
 	void Decrypt();
 };
+#pragma pack(pop, 1)

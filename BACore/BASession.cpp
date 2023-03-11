@@ -4,34 +4,28 @@
 
 void BASession::OnRecv()
 {
-	if (true == _socket.expired())
-		return;
-
-	auto socket = _socket.lock();
-
-	do
+	if (auto socket = _socket.lock())
 	{
-		std::shared_ptr<NetMessage> msg = NetMessage::CreateMsg();
-		auto size = socket->Read(msg);
-		if (size > 0)
+		do
 		{
+			DWORD size = 0;
+			if(false == socket->Peek(&size, sizeof(DWORD)))
+				break;
+
+			std::shared_ptr<NetMessage> msg = NetMessage::CreateMsg();
+			auto result = socket->Read(msg.get(), size);
+
+			if (result == -1)
+				break;
+
 			if (IsEncryt())
 			{
 				msg->Decrypt();
 			}
 			EnqueueMsg(msg);
-		}
-		else if (size == 0)
-		{
-			break;
-		}
-		else
-		{
-			//Session Delete
-			break;
-		}
 
-	} while (1);
+		} while (1);
+	}
 }
 
 void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
@@ -50,6 +44,7 @@ void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 
 void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
 {
+	BASmartCS lock(&_cs);
 	if (auto socket = _socket.lock())
 	{
 		if (IsEncryt())
@@ -57,6 +52,6 @@ void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
 			msg->Encrypt();
 		}
 
-		socket->Send(msg);
+		socket->Send(msg.get(), msg->TotalSize());
 	}
 }

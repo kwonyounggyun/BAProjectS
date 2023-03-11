@@ -23,23 +23,29 @@ class SerializedObject
 private:
 	BACS _cs;
 	std::list<std::shared_ptr<Task>> _serializer;
+	__time64_t _last_update;
 
 public:
 	SerializedObject() {}
 	virtual ~SerializedObject() {}
+
+	void SetLastUpdateTime(__time64_t update_time) { _last_update = update_time; }
+	__time64_t GetLastUpdateTime() { return _last_update; }
 
 	void AddTask(std::shared_ptr<Task> task)
 	{
 		BASmartCS lock(&_cs);
 		_serializer.push_back(task);
 	}
-
+	virtual void Update(time_t time) {}
 	bool Work()
 	{
+		__time64_t time = GetTickCount64();
 		std::list<std::shared_ptr<Task>> list;
 		{
 			BASmartCS lock(&_cs);
-			list.assign(_serializer.begin(), _serializer.end());
+		
+			list.splice(list.begin(), _serializer);
 		}
 
 		for (auto iter = list.begin(); iter != list.end();)
@@ -57,6 +63,8 @@ public:
 
 			iter = list.erase(iter);
 		}
+
+		Update(time);
 
 		return true;
 	}

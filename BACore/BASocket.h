@@ -13,16 +13,19 @@ struct SocketOption
 
 class NetMessage;
 class BASession;
+class BAOverlapped;
 class BASocket : public BASharedObject<BASocket>
 {
 	friend class BASession;
 
 private:
+	std::function<bool (std::shared_ptr<BASocket>&, BAOverlapped*)> _post_completion_callback;
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
 
 	std::shared_ptr<BASession> _session;
 	BASocket() : _socket(INVALID_SOCKET) {}
+
 
 public:
 	static std::shared_ptr<BASocket> CreateSocket();
@@ -31,9 +34,7 @@ public:
 
 	void SetSession(std::shared_ptr<BASession>& session) { _session = session; }
 	bool Recv();
-	//bool Send(void* msg, __int32 size);
-
-	bool  Send(std::shared_ptr<NetMessage>& msg);
+	bool  Send(void* buf, __int32 len);
 
 	bool Bind(const SOCKADDR_IN& sock_addr);
 	bool Listen(int backlog);
@@ -43,7 +44,8 @@ public:
 	void Close();
 	bool InitSocket();
 
-	__int32 Read(std::shared_ptr<NetMessage>& msg);
+	__int32 Read(void* buf, __int32 len);
+	bool Peek(void* msg, __int32 size);
 
 	void SetOptions(SocketOption option);
 	void Shutdown();
@@ -55,6 +57,5 @@ public:
 	void OnSend(DWORD trans_byte);
 
 public:
-	bool Readable(__int32 size) { return _recv_buf.Readable(size); }
-	bool Peek(void* msg, __int32 size);
+	void SetPostCompletionCallback(std::function<bool(std::shared_ptr<BASocket>&, BAOverlapped*)> post_completion_callback) { _post_completion_callback = post_completion_callback; }
 };

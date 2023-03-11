@@ -6,7 +6,6 @@
 
 std::shared_ptr<BASocket> BASocket::CreateSocket()
 {
-	//return std::make_shared<BASocket>();
 	auto socket = BA_NEW BASocket();
 	return std::shared_ptr<BASocket>(socket);
 }
@@ -18,13 +17,14 @@ BASocket::~BASocket()
 
 bool BASocket::Recv()
 {
-	WSABUF wsa_buf[5];
-	_recv_buf.GetRecvWsaBuf(wsa_buf, 5);
+	int count = MAX_NETWORK_BUF_COUNT;
+	WSABUF wsa_buf[MAX_NETWORK_BUF_COUNT];
+	_recv_buf.GetRecvWsaBuf(wsa_buf, count);
 
 	DWORD flags = 0;
 	auto weak = weak_from_this();
 	auto overlapped = BA_NEW BAOverlapped_Recv(weak);
-	int result = WSARecv(_socket, wsa_buf, 5, NULL, &flags, overlapped, nullptr);
+	int result = WSARecv(_socket, wsa_buf, count, NULL, &flags, overlapped, nullptr);
 
 	if (result == SOCKET_ERROR)
 	{
@@ -39,92 +39,21 @@ bool BASocket::Recv()
 	return true;
 }
 
-//bool BASocket::Send(void* msg, __int32 size)
-//{
-//	if (_socket == INVALID_SOCKET)
-//		return false;
-//
-//	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
-//	overlapped->_send_byte = size;
-//
-//	WSABUF wsa_buf[2];
-//	wsa_buf[0].buf = (CHAR*) & (overlapped->_send_byte);
-//	wsa_buf[0].len = sizeof(overlapped->_send_byte);
-//	wsa_buf[1].buf = (CHAR*)msg;
-//	wsa_buf[1].len = size;
-//	
-//	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
-//
-//	if (result == SOCKET_ERROR)
-//	{
-//		if (WSA_IO_PENDING != WSAGetLastError())
-//		{
-//			ErrorLog("WSA Recv Error");
-//			return false;
-//		}
-//	}
-//
-//	return true;
-//}
-
-bool BASocket::Send(std::shared_ptr<NetMessage>& msg)
+bool BASocket::Send(void* buf, __int32 len)
 {
-	if (_socket == INVALID_SOCKET)
-		return false;
-
-	auto weak =  weak_from_this();
-	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send(weak);
-	overlapped->SetMsg(msg);
-
-	WSABUF wsa_buf[2];
-	wsa_buf[0].buf = (CHAR*)&msg->_size;
-	wsa_buf[0].len = sizeof(msg->_size);
-	wsa_buf[1].buf = (CHAR*)&msg->_data;
-	wsa_buf[1].len = msg->_size;
-
-	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
-
+	WSABUF wsa_buf;
+	wsa_buf.buf = (char*)buf;
+	wsa_buf.len = len;
+	DWORD trans_byte;
+	int result = WSASend(_socket, &wsa_buf, 1, &trans_byte, 0, nullptr, nullptr);
 	if (result == SOCKET_ERROR)
 	{
-		if (WSA_IO_PENDING != WSAGetLastError())
-		{
-			ErrorLog("WSA Send Error");
-			BA_DELETE(overlapped)
+		ErrorLog("WSA Send Error");
 			return false;
-		}
 	}
 
 	return true;
 }
-
-//bool BASocket::Send(std::shared_ptr<NetMessage>& msg)
-//{
-//	if (_socket == INVALID_SOCKET)
-//		return false;
-//
-//	BAOverlapped_Send* overlapped = BA_NEW BAOverlapped_Send((ULONG_PTR)this);
-//	overlapped->SetMsg(msg);
-//	overlapped->_send_byte = msg->GetSize();
-//
-//	WSABUF wsa_buf[2];
-//	wsa_buf[0].buf = (CHAR*)&(overlapped->_send_byte);
-//	wsa_buf[0].len = sizeof(overlapped->_send_byte);
-//	wsa_buf[1].buf = msg->GetBuffer<CHAR>();
-//	wsa_buf[1].len = msg->GetSize();
-//
-//	int result = WSASend(_socket, wsa_buf, 2, NULL, NULL, overlapped, nullptr);
-//
-//	if (result == SOCKET_ERROR)
-//	{
-//		if (WSA_IO_PENDING != WSAGetLastError())
-//		{
-//			ErrorLog("WSA Send Error");
-//			return false;
-//		}
-//	}
-//
-//	return true;
-//}
 
 bool BASocket::Bind(const SOCKADDR_IN& sock_addr)
 {
@@ -308,26 +237,14 @@ bool BASocket::Peek(void* msg, __int32 size)
 	return _recv_buf.Peek(msg, size);
 }
 
-__int32 BASocket::Read(std::shared_ptr<NetMessage>& msg)
+__int32 BASocket::Read(void* buf, __int32 len)
 {
-	DWORD recv_size;
-	if (FALSE == _recv_buf.Peek(&recv_size, sizeof(DWORD)))
-		return 0;
-
-	DWORD total_size = recv_size += sizeof(DWORD);
-	if (FALSE == _recv_buf.Readable(total_size))
-		return 0;
-
-	if (recv_size > msg->_size)
-	{
-		ErrorLog("Message buffer size over!");
+	if (FALSE == _recv_buf.Readable(len))
 		return -1;
-	}
 
-	_recv_buf.Read(&recv_size, sizeof(recv_size));
-	_recv_buf.Read(&msg->_data, recv_size);
+	_recv_buf.Read(buf, len);
 
-	return recv_size;
+	return len;
 }
 
 void BASocket::SetOptions(SocketOption option)
