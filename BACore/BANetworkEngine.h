@@ -57,6 +57,4 @@ public:
 	virtual bool Release();
 
 	virtual void RecvPacketProcess(NetMessage* msg) { delete msg; }
-	
-	void Loop();
 };

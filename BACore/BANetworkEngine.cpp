@@ -143,7 +143,7 @@ bool BANetworkEngine::StartNetwork(int thread_count)
 				ULONG_PTR completion_key = 0;
 				BAOverlapped* overlapped = nullptr;
 
-				if (false == GetQueuedCompletionStatus(engine->GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, INFINITE))
+				if (false == GetQueuedCompletionStatus(engine->GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
 				{
 					if (overlapped != NULL)
 					{
@@ -229,42 +229,4 @@ bool BANetworkEngine::Release()
 	_threads.clear();
 
 	return true;
-}
-
-void BANetworkEngine::Loop()
-{
-	while (1)
-	{
-		DWORD trans_byte = 0;
-		ULONG_PTR completion_key = 0;
-		BAOverlapped* overlapped = nullptr;
-
-		if (false == GetQueuedCompletionStatus(_iocp_handle, &trans_byte, &completion_key, (LPOVERLAPPED*) &overlapped, 500))
-		{
-			if (overlapped != NULL)
-			{
-				ErrorLog("Client unexpected termination!!");
-				auto socket = overlapped->GetSocket();
-				if(socket != nullptr)
-					OnClose(socket);
-
-				OverlappedTaskSeparator::Delete(overlapped);
-			}
-			else
-			{
-				//IOCP close
-				if (GetLastError() == ERROR_ABANDONED_WAIT_0)
-				{
-					InfoLog("CompletionPort Error");
-					break;
-				}
-			}
-
-			continue;
-		}
-
-		overlapped->SetEngine(this);
-		overlapped->SetTransByte(trans_byte);
-		OverlappedTaskSeparator::Work(overlapped);
-	}
 }

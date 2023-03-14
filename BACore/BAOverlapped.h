@@ -4,25 +4,26 @@
 class BASocket;
 class BANetworkEngine;
 
-enum class Overlapped_type
+enum class Overlapped_type : __int32
 {
+	NONE = -1,
 	ACCEPT = 0,
 	CONNECT = 1,
 	SEND = 2,
-	RECV = 3
+	RECV = 3,
 };
 
 class BAOverlapped : public OVERLAPPED
 {
 protected:
-	__int32 _error_code;
-	std::weak_ptr<BASocket> _socket;
 	DWORD _trans_byte;
-	BANetworkEngine* _engine;
 	Overlapped_type _type;
+	BANetworkEngine* _engine;
+	std::weak_ptr<BASocket> _socket;
+
 
 public:
-	explicit BAOverlapped(std::weak_ptr<BASocket>& socket) : _error_code(0), _socket(socket), _trans_byte(0), _engine(nullptr)
+	explicit BAOverlapped(std::weak_ptr<BASocket>& socket) : _socket(socket), _trans_byte(0), _engine(nullptr), _type(Overlapped_type::NONE)
 	{
 	}
 

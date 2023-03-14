@@ -38,4 +38,4 @@ public:
 	void Encrypt();
 	void Decrypt();
 };
-#pragma pack(pop, 1)
+#pragma pack(pop)

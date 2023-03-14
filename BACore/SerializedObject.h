@@ -27,7 +27,7 @@ private:
 
 public:
 	SerializedObject() {}
-	virtual ~SerializedObject() {}
+	virtual ~SerializedObject() = 0 {}
 
 	void SetLastUpdateTime(__time64_t update_time) { _last_update = update_time; }
 	__time64_t GetLastUpdateTime() { return _last_update; }
