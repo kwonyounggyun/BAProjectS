@@ -38,7 +38,7 @@ public:
     }
 
 
-    std::shared_ptr<BABufferUnitNode> _next;
+    BASharedPtr<BABufferUnitNode> _next;
     BABufferUnit _buffer;
 };
 
@@ -47,7 +47,7 @@ class BABufferContainer
 public:
     BABufferContainer():_size(0)
     {
-        _cur_read = _cur_write = _tail = std::make_shared<BABufferUnitNode>();
+        _cur_read = _cur_write = _tail = BAMakeShared<BABufferUnitNode>();
     }
 
     __int32 Write(void* buf, __int32 len);
@@ -60,9 +60,9 @@ public:
     __int64 GetSize() { return _size; }
 
 protected:
-    std::shared_ptr<BABufferUnitNode> _cur_read;
-    std::shared_ptr<BABufferUnitNode> _cur_write;
-    std::shared_ptr<BABufferUnitNode> _tail;
+    BASharedPtr<BABufferUnitNode> _cur_read;
+    BASharedPtr<BABufferUnitNode> _cur_write;
+    BASharedPtr<BABufferUnitNode> _tail;
 
     __int64 _size;
 };

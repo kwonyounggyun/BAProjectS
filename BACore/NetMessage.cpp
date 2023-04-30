@@ -17,8 +17,8 @@ void NetMessage::Decrypt()
     _size = len;
 }
 
-std::shared_ptr<NetMessage> NetMessage::CreateMsg()
+BASharedPtr<NetMessage> NetMessage::CreateMsg()
 {
     NetMessage* msg = BA_NEW NetMessage();
-    return std::shared_ptr<NetMessage>(msg);
+    return BASharedPtr<NetMessage>(msg);
 }

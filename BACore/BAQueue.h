@@ -9,7 +9,7 @@ class PushLockQueue
 	struct Node
 	{
 		T _val;
-		std::shared_ptr<Node> _next;
+		BASharedPtr<Node> _next;
 		volatile bool _flag;
 		
 		Node() : _val(T()), _next(nullptr), _flag(false)
@@ -22,20 +22,20 @@ class PushLockQueue
 	};
 
 private:
-	std::shared_ptr<Node> _head;
-	std::atomic<std::shared_ptr<Node>> _tail;
+	BASharedPtr<Node> _head;
+	std::atomic<BASharedPtr<Node>> _tail;
 
 public:
 	PushLockQueue()
 	{
-		auto dummy = std::make_shared<Node>();
+		auto dummy = BAMakeShared<Node>();
 		_head = dummy;
 		_tail.store(dummy);
 	}
 
 	void push_back(T& val)
 	{
-		auto new_node = std::make_shared<Node>(val);
+		auto new_node = BAMakeShared<Node>(val);
 		auto cur_tail = _tail.load();
 		while (!_tail.compare_exchange_weak(cur_tail, new_node, std::memory_order_acquire));
 		cur_tail->_next = new_node;

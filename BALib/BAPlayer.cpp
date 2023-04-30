@@ -7,7 +7,7 @@ void BAPlayer::CallHandle(DWORD protocol, void* msg)
 	GetPlayerHandler()->Call(protocol, msg, this);
 }
 
-void BAPlayer::AddNetworkTask(std::shared_ptr<ITask> task)
+void BAPlayer::AddNetworkTask(BASharedPtr<ITask> task)
 {
 	SerializedObject::AddTask(task);
 }

@@ -8,16 +8,16 @@ bool TestClient::Initialize(std::vector<NetworkConfig>& configs)
     return false;
 }
 
-void TestClient::OnAcceptComplete(std::shared_ptr<BASession>& session)
+void TestClient::OnAcceptComplete(BASharedPtr<BASession>& session)
 {
 }
 
-void TestClient::OnConnectComplete(std::shared_ptr<BASession>& session)
+void TestClient::OnConnectComplete(BASharedPtr<BASession>& session)
 {
     _client_sessions = session;
     std::cout << "connect" << std::endl;
 
-    _player = std::make_shared<TestObject>();
+    _player = BAMakeShared<TestObject>();
     _client_sessions->SetObject(_player);
     start.store(true);
 }
@@ -44,7 +44,7 @@ void TestClient::Loop()
     }
 }
 
-void TestClient::SendMsg(std::shared_ptr<NetMessage>& msg)
+void TestClient::SendMsg(BASharedPtr<NetMessage>& msg)
 {
     _client_sessions->SendMsg(msg);
 }
@@ -54,7 +54,7 @@ void TestObject::CallHandle(DWORD protocol, void* msg)
     NetClientHandler::GetInstance()->Call(protocol, msg, this);
 }
 
-void TestObject::AddNetworkTask(std::shared_ptr<ITask> task)
+void TestObject::AddNetworkTask(BASharedPtr<ITask> task)
 {
     task->Execute();
 }

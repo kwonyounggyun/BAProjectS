@@ -9,7 +9,7 @@ bool GameServer::Initialize(std::vector<NetworkConfig>& configs)
 	return false;
 }
 
-void GameServer::OnAcceptComplete(std::shared_ptr<BASession>& session)
+void GameServer::OnAcceptComplete(BASharedPtr<BASession>& session)
 {
 	{
 		BALockGuard lock(_cs);
@@ -27,7 +27,7 @@ void GameServer::OnAcceptComplete(std::shared_ptr<BASession>& session)
 	player->SendMsg(msg);
 }
 
-void GameServer::OnConnectComplete(std::shared_ptr<BASession>& session)
+void GameServer::OnConnectComplete(BASharedPtr<BASession>& session)
 {
 	BALockGuard lock(_cs);
 	_connect_sessions.insert(std::make_pair((ULONGLONG)session.get(), session));

@@ -22,7 +22,7 @@ class SerializedObject
 {
 private:
 	BALock _cs;
-	std::list<std::shared_ptr<ITask>> _serializer;
+	std::list<BASharedPtr<ITask>> _serializer;
 	__time64_t _last_update;
 
 public:
@@ -32,7 +32,7 @@ public:
 	void SetLastUpdateTime(__time64_t update_time) { _last_update = update_time; }
 	__time64_t GetLastUpdateTime() { return _last_update; }
 
-	void AddTask(std::shared_ptr<ITask> task)
+	void AddTask(BASharedPtr<ITask> task)
 	{
 		BALockGuard lock(_cs);
 		_serializer.push_back(task);
@@ -41,7 +41,7 @@ public:
 	bool Work()
 	{
 		__time64_t time = GetTickCount64();
-		std::list<std::shared_ptr<ITask>> list;
+		std::list<BASharedPtr<ITask>> list;
 		{
 			BALockGuard lock(_cs);
 		

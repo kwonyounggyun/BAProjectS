@@ -19,33 +19,33 @@ class BANetworkEngine
 {
 private:
 	std::map<ULONG_PTR, NetworkConfig> _network_configs;
-	std::map<ULONG_PTR, std::shared_ptr<BASocket>> _sockets;
-	std::vector<std::shared_ptr<BAThread>> _threads;
+	std::map<ULONG_PTR, BASharedPtr<BASocket>> _sockets;
+	std::vector<BASharedPtr<BAThread>> _threads;
 
 	HANDLE _iocp_handle;
 
 	BALock _cs;
 
 private:
-	bool RegistSocket(std::shared_ptr<BASocket>& socket);
+	bool RegistSocket(BASharedPtr<BASocket>& socket);
 	bool UnregistSocket(ULONG_PTR key);
 public:
-	bool PostCompletionPort(std::shared_ptr<BASocket>& socket, BAOverlapped* overlapped);
+	bool PostCompletionPort(BASharedPtr<BASocket>& socket, BAOverlapped* overlapped);
 
 public:
 	BANetworkEngine() : _iocp_handle(NULL) {}
 	virtual ~BANetworkEngine() {}
 
 	HANDLE GetIOCPHandle() { return _iocp_handle; }
-	void OnClose(std::shared_ptr<BASocket>& socket);
-	void OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client, DWORD trans_byte);
-	void OnConnect(std::shared_ptr<BASocket>& connect, DWORD trans_byte);
+	void OnClose(BASharedPtr<BASocket>& socket);
+	void OnAccept(ULONG_PTR key, BASharedPtr<BASocket>& client, DWORD trans_byte);
+	void OnConnect(BASharedPtr<BASocket>& connect, DWORD trans_byte);
 
 	bool Connect(const SOCKADDR_IN& sock_addr, const SocketOption& option);
 
 protected:
-	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session) = 0;
-	virtual void OnConnectComplete(std::shared_ptr<BASession>& session) = 0;
+	virtual void OnAcceptComplete(BASharedPtr<BASession>& session) = 0;
+	virtual void OnConnectComplete(BASharedPtr<BASession>& session) = 0;
 
 public:
 	virtual bool Initialize(std::vector<NetworkConfig>& configs);

@@ -39,7 +39,7 @@
 //	}
 //}
 ////class JOB;
-////BAScheduler<std::shared_ptr<JOB>> sch;
+////BAScheduler<BASharedPtr<JOB>> sch;
 ////
 ////class JOB 
 ////{
@@ -62,11 +62,11 @@
 ////		{
 ////		case 1:
 ////		case 2:
-////			sch.RegistJob(5000, std::shared_ptr<JOB>(this));
+////			sch.RegistJob(5000, BASharedPtr<JOB>(this));
 ////			break;
 ////		case 3:
 ////		case 4:
-////			sch.RegistJob(2000, std::shared_ptr<JOB>(this));
+////			sch.RegistJob(2000, BASharedPtr<JOB>(this));
 ////			break;
 ////		}
 ////	}
@@ -85,10 +85,10 @@
 //	t.join();
 //
 //	//
-//	//sch.RegistJob(10000, std::make_shared<JOB>(1));
-//	//sch.RegistJob(1000, std::make_shared<JOB>(2));
-//	//sch.RegistJob(8000, std::make_shared<JOB>(3));
-//	//sch.RegistJob(10000, std::make_shared<JOB>(4));
+//	//sch.RegistJob(10000, BAMakeShared<JOB>(1));
+//	//sch.RegistJob(1000, BAMakeShared<JOB>(2));
+//	//sch.RegistJob(8000, BAMakeShared<JOB>(3));
+//	//sch.RegistJob(10000, BAMakeShared<JOB>(4));
 //
 //	//while (1)
 //	//{

@@ -7,14 +7,14 @@ class BAPlayer;
 class ActorManager : public SerializedObject, public BASingleton<ActorManager>
 {
 private:
-	std::set<std::shared_ptr<BAActor>> _actors;
+	std::set<BASharedPtr<BAActor>> _actors;
 	BALock _cs;
 
 public:
-	std::shared_ptr<BAPlayer> CreatePlayer(BASession* session);
-	std::shared_ptr<BAActor> CreateActor();
+	BASharedPtr<BAPlayer> CreatePlayer(BASession* session);
+	BASharedPtr<BAActor> CreateActor();
 
-	void BroadcastMsg(std::shared_ptr<NetMessage>& msg);
+	void BroadcastMsg(BASharedPtr<NetMessage>& msg);
 };
 
 #define GetActorManager() ActorManager::GetInstance()

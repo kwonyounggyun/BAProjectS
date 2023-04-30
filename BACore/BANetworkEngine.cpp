@@ -2,7 +2,7 @@
 #include "BAOverlapped.h"
 #include "BANetworkEngine.h"
 
-bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
+bool BANetworkEngine::RegistSocket(BASharedPtr<BASocket>& socket)
 {
 	BALockGuard lock(_cs);
 
@@ -10,7 +10,7 @@ bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
 
 	auto result = _sockets.insert(std::make_pair(key, socket));
 	auto engine = this;
-	socket->SetPostCompletionCallback([engine](std::shared_ptr<BASocket>& sock, BAOverlapped* overlapped)->bool {
+	socket->SetPostCompletionCallback([engine](BASharedPtr<BASocket>& sock, BAOverlapped* overlapped)->bool {
 		return engine->PostCompletionPort(sock, overlapped);
 		});
 
@@ -28,19 +28,19 @@ bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
 	return true;
 }
 
-bool BANetworkEngine::PostCompletionPort(std::shared_ptr<BASocket>& socket, BAOverlapped* overlapped)
+bool BANetworkEngine::PostCompletionPort(BASharedPtr<BASocket>& socket, BAOverlapped* overlapped)
 {
 	return PostQueuedCompletionStatus(_iocp_handle, 0, (ULONG_PTR)socket.get(), overlapped);
 }
 
-void BANetworkEngine::OnClose(std::shared_ptr<BASocket>& socket)
+void BANetworkEngine::OnClose(BASharedPtr<BASocket>& socket)
 {
 	socket->Close();
 	UnregistSocket((ULONG_PTR)socket.get());
 	InfoLog("Socket Close");
 }
 
-void BANetworkEngine::OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client, DWORD trans_byte)
+void BANetworkEngine::OnAccept(ULONG_PTR key, BASharedPtr<BASocket>& client, DWORD trans_byte)
 {
 	auto iter = _network_configs.find(key);
 	if (iter == _network_configs.end())
@@ -58,7 +58,7 @@ void BANetworkEngine::OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client,
 	if (false == RegistSocket(client))
 		return;
 
-	auto session = std::make_shared<BASession>();
+	auto session = BAMakeShared<BASession>();
 	session->SetSocket(client);
 	session->SetEncryt(iter->second._encrypt);
 	client->SetSession(session);
@@ -67,12 +67,12 @@ void BANetworkEngine::OnAccept(ULONG_PTR key, std::shared_ptr<BASocket>& client,
 	OnAcceptComplete(session);
 }
 
-void BANetworkEngine::OnConnect(std::shared_ptr<BASocket>& connect, DWORD trans_byte)
+void BANetworkEngine::OnConnect(BASharedPtr<BASocket>& connect, DWORD trans_byte)
 {
 	if (false == RegistSocket(connect))
 		return;
 
-	auto session = std::make_shared<BASession>();
+	auto session = BAMakeShared<BASession>();
 	session->SetSocket(connect);
 	connect->SetSession(session);
 
@@ -137,7 +137,7 @@ bool BANetworkEngine::StartNetwork(int thread_count)
 		/*std::thread* t = BA_NEW std::thread(WorkThread, this);
 		_threads.push_back(t);*/
 		auto engine = this;
-		auto thread = std::make_shared<BAThread>();
+		auto thread = BAMakeShared<BAThread>();
 		thread->Run([engine](std::atomic_bool* state)->void {
 			while ((*state).load())
 			{

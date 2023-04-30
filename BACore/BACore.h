@@ -24,6 +24,9 @@
 #include <sal.h>
 
 typedef std::basic_string<TCHAR> tstring;
+#define BASharedPtr std::shared_ptr
+#define BAWeakPtr std::weak_ptr
+#define BAMakeShared std::make_shared
 
 #include "BALock.h"
 #include "BAMemoryPool.h"

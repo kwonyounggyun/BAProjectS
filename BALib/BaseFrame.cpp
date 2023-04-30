@@ -57,7 +57,7 @@ bool BaseFrame::StartTask(int thread_count)
 	for (int i = 0; i < thread_count; i++)
 	{
 		auto frame = this;
-		auto thread = std::make_shared<BAThread>();
+		auto thread = BAMakeShared<BAThread>();
 		thread->Run([frame](std::atomic_bool* state)->void
 			{
 				while ((*state).load())
@@ -93,7 +93,7 @@ bool BaseFrame::Release()
 	return true;
 }
 
-std::shared_ptr<SerializedObject> BaseFrame::PopTaskQueue()
+BASharedPtr<SerializedObject> BaseFrame::PopTaskQueue()
 {
 	BALockGuard lock(_cs);
 	static int count = 0;
@@ -119,7 +119,7 @@ std::shared_ptr<SerializedObject> BaseFrame::PopTaskQueue()
 	return task;
 }
 
-void BaseFrame::PushTaskQueue(std::shared_ptr<SerializedObject>& object)
+void BaseFrame::PushTaskQueue(BASharedPtr<SerializedObject>& object)
 {
 	BALockGuard lock(_cs);
 	_queue_thread_tasks.push(object);

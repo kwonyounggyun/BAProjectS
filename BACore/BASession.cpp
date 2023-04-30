@@ -13,7 +13,7 @@ void BASession::OnRecv()
 			if(false == socket->Peek(&size, sizeof(DWORD)))
 				break;
 
-			std::shared_ptr<NetMessage> msg = NetMessage::CreateMsg();
+			BASharedPtr<NetMessage> msg = NetMessage::CreateMsg();
 			auto result = socket->Read(msg.get(), size);
 
 			if (result == -1)
@@ -29,12 +29,12 @@ void BASession::OnRecv()
 	}
 }
 
-void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
+void BASession::EnqueueMsg(BASharedPtr<NetMessage>& msg)
 {
 	if (auto obj = _object.lock())
 	{
 		auto obj_ptr = obj.get();
-		auto task = std::make_shared<PacketTask>([msg, obj_ptr]()->void {
+		auto task = BAMakeShared<PacketTask>([msg, obj_ptr]()->void {
 			obj_ptr->CallHandle(msg->GetProtocol(), msg->GetBuffer<char>());
 			});
 
@@ -43,7 +43,7 @@ void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 }
 
 
-void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
+void BASession::SendMsg(BASharedPtr<NetMessage>& msg)
 {
 	//BASmartCS lock(&_cs);
 	if (auto socket = _socket.lock())

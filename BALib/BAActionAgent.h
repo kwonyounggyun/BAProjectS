@@ -11,12 +11,12 @@ class BAActionAgent
 {
 private:
 	BAActor* _owner;
-	std::shared_ptr<Action> _action;
+	BASharedPtr<Action> _action;
 
 public:
 	BAActionAgent() : _owner(nullptr) 
 	{
-		_action = std::make_shared<IdleAction>();
+		_action = BAMakeShared<IdleAction>();
 	}
 	~BAActionAgent() {}
 

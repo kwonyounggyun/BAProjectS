@@ -18,24 +18,24 @@ protected:
 	DWORD _trans_byte;
 	Overlapped_type _type;
 	BANetworkEngine* _engine;
-	std::weak_ptr<BASocket> _socket;
+	BAWeakPtr<BASocket> _socket;
 
 
 public:
-	explicit BAOverlapped(std::weak_ptr<BASocket>& socket) : _socket(socket), _trans_byte(0), _engine(nullptr), _type(Overlapped_type::NONE)
+	explicit BAOverlapped(BAWeakPtr<BASocket>& socket) : _socket(socket), _trans_byte(0), _engine(nullptr), _type(Overlapped_type::NONE)
 	{
 	}
 
 	void SetTransByte(DWORD trans_byte) { _trans_byte = trans_byte; }
 	void SetEngine(BANetworkEngine* engine) { _engine = engine; }
-	std::shared_ptr<BASocket> GetSocket() { return _socket.lock(); }
+	BASharedPtr<BASocket> GetSocket() { return _socket.lock(); }
 	Overlapped_type GetType() { return _type; }
 };
 
 class BAOverlapped_Recv : public BAOverlapped
 {
 public:
-	explicit BAOverlapped_Recv(std::weak_ptr<BASocket>& socket) : BAOverlapped(socket) 
+	explicit BAOverlapped_Recv(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket) 
 	{
 		_type = Overlapped_type::RECV;
 	}
@@ -47,7 +47,7 @@ class BAOverlapped_Send : public BAOverlapped
 public:
 	DWORD _send_byte;
 public:
-	explicit BAOverlapped_Send(std::weak_ptr<BASocket>& socket) : BAOverlapped(socket) 
+	explicit BAOverlapped_Send(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket) 
 	{
 		_type = Overlapped_type::SEND;
 	}
@@ -57,23 +57,23 @@ public:
 class BAOverlapped_Accept : public BAOverlapped
 {
 private:
-	std::shared_ptr<BASocket> _client;
+	BASharedPtr<BASocket> _client;
 
 public:
-	explicit BAOverlapped_Accept(std::weak_ptr<BASocket>& socket) : BAOverlapped(socket) 
+	explicit BAOverlapped_Accept(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket) 
 	{
 		_type = Overlapped_type::ACCEPT;
 	}
 	void CompleteIO();
-	void SetClient(std::shared_ptr<BASocket>& client) { _client = client; }
+	void SetClient(BASharedPtr<BASocket>& client) { _client = client; }
 };
 
 class BAOverlapped_Connect : public BAOverlapped
 {
 private:
-	std::shared_ptr<BASocket> _connect;
+	BASharedPtr<BASocket> _connect;
 public:
-	explicit BAOverlapped_Connect(std::weak_ptr<BASocket>& socket) : BAOverlapped(socket) 
+	explicit BAOverlapped_Connect(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket) 
 	{
 		_type = Overlapped_type::CONNECT;
 		_connect = socket.lock();

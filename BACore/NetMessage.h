@@ -24,7 +24,7 @@ private:
 
 	DWORD TotalSize() { return _size; }
 public:
-	static std::shared_ptr<NetMessage> CreateMsg();
+	static BASharedPtr<NetMessage> CreateMsg();
 
 	template<typename T>
 	T* GetBuffer() { return reinterpret_cast<T*>(_data._array); }

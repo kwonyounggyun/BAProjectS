@@ -5,10 +5,10 @@
 #include "NetMessage.h"
 #include "BAEncryptor.h"
 
-std::shared_ptr<BASocket> BASocket::CreateSocket()
+BASharedPtr<BASocket> BASocket::CreateSocket()
 {
 	auto socket = BA_NEW BASocket();
-	return std::shared_ptr<BASocket>(socket);
+	return BASharedPtr<BASocket>(socket);
 }
 
 BASocket::~BASocket()

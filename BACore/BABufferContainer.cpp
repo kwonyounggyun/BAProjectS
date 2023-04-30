@@ -101,7 +101,7 @@ bool BABufferContainer::Peek(void* buf, __int32 len)
 
     char* msg_buf = reinterpret_cast<char*>(buf);
 
-    std::shared_ptr<BABufferUnitNode> node = _cur_read;
+    BASharedPtr<BABufferUnitNode> node = _cur_read;
     __int32 remain = len;
     do
     {
@@ -143,7 +143,7 @@ bool BABufferContainer::Reserve(size_t length)
 
 bool BABufferContainer::PushNode()
 {
-    _tail->_next = std::make_shared<BABufferUnitNode>();
+    _tail->_next = BAMakeShared<BABufferUnitNode>();
     _tail = _tail->_next;
 
     return true;

@@ -1,11 +1,11 @@
 #include "TestServer.h"
 
-void TestServer::OnAcceptComplete(std::shared_ptr<BASession>& session)
+void TestServer::OnAcceptComplete(BASharedPtr<BASession>& session)
 {
 	_sessions.push_back(session);
 }
 
-void TestServer::OnConnectComplete(std::shared_ptr<BASession>& session)
+void TestServer::OnConnectComplete(BASharedPtr<BASession>& session)
 {
 	_sessions.push_back(session);
 }

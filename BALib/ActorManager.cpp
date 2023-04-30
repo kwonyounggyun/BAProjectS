@@ -3,10 +3,10 @@
 #include "BAActor.h"
 #include "BAPlayer.h"
 
-std::shared_ptr<BAPlayer> ActorManager::CreatePlayer(BASession* session)
+BASharedPtr<BAPlayer> ActorManager::CreatePlayer(BASession* session)
 {
 	static int id = 0;
-	auto player = std::make_shared<BAPlayer>(session);
+	auto player = BAMakeShared<BAPlayer>(session);
 	session->SetObject(player);
 
 	{
@@ -19,7 +19,7 @@ std::shared_ptr<BAPlayer> ActorManager::CreatePlayer(BASession* session)
 	return player;
 }
 
-void ActorManager::BroadcastMsg(std::shared_ptr<NetMessage>& msg)
+void ActorManager::BroadcastMsg(BASharedPtr<NetMessage>& msg)
 {
 	for (auto iter = _actors.begin(); iter != _actors.end(); iter++)
 	{

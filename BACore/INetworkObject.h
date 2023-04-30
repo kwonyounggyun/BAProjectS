@@ -8,5 +8,5 @@ class INetworkObject
 {
 public:
 	virtual void CallHandle(DWORD protocol, void* msg) = 0;
-	virtual void AddNetworkTask(std::shared_ptr<ITask> task) = 0;
+	virtual void AddNetworkTask(BASharedPtr<ITask> task) = 0;
 };

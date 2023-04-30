@@ -19,7 +19,7 @@ public:
 public:
 	// Inherited via INetworkObject
 	virtual void CallHandle(DWORD protocol, void* msg) override;
-	virtual void AddNetworkTask(std::shared_ptr<ITask> task) override;
+	virtual void AddNetworkTask(BASharedPtr<ITask> task) override;
 
 	virtual void Initailize() 
 	{
@@ -29,7 +29,7 @@ public:
 public:
 	virtual void Move(const BVector3D& direction, const BVector3D& forward) override;
 
-	void SendMsg(std::shared_ptr<NetMessage>& msg)
+	void SendMsg(BASharedPtr<NetMessage>& msg)
 	{
 		_session->SendMsg(msg);
 	}

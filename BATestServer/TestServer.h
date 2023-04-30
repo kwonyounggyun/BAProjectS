@@ -6,9 +6,9 @@
 class TestServer : public BANetworkEngine
 {
 private:
-	std::vector<std::shared_ptr<BASession>> _sessions;
+	std::vector<BASharedPtr<BASession>> _sessions;
 
 public:
-	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session);
-	virtual void OnConnectComplete(std::shared_ptr<BASession>& session);
+	virtual void OnAcceptComplete(BASharedPtr<BASession>& session);
+	virtual void OnConnectComplete(BASharedPtr<BASession>& session);
 };

@@ -6,11 +6,11 @@
 
 using PLAYER_KEY = ULONGLONG;
 using SESSION_KEY = PLAYER_KEY;
-using THREAD_TASKS = std::queue<std::shared_ptr<SerializedObject>>;
+using THREAD_TASKS = std::queue<BASharedPtr<SerializedObject>>;
 class BaseFrame : public BANetworkEngine
 {
 private:
-	std::vector<std::shared_ptr<BAThread>> _task_threads;
+	std::vector<BASharedPtr<BAThread>> _task_threads;
 
 	/*std::vector<THREAD_TASKS> _vec_thread_tasks;
 	std::queue<THREAD_TASKS*> _queue_thread_tasks;*/
@@ -22,8 +22,8 @@ protected:
 	BaseFrame() {}
 	virtual ~BaseFrame() {}
 	// Inherited via BANetworkEngine
-	virtual void OnAcceptComplete(std::shared_ptr<BASession>& session) {}
-	virtual void OnConnectComplete(std::shared_ptr<BASession>& session) {}
+	virtual void OnAcceptComplete(BASharedPtr<BASession>& session) {}
+	virtual void OnConnectComplete(BASharedPtr<BASession>& session) {}
 
 public:
 	virtual bool Initialize(std::vector<NetworkConfig>& configs);
@@ -35,7 +35,7 @@ public:
 	/*THREAD_TASKS* PopTaskQueue();
 	void PushTaskQueue(THREAD_TASKS* object);*/
 
-	std::shared_ptr<SerializedObject> PopTaskQueue();
-	void PushTaskQueue(std::shared_ptr<SerializedObject>& object);
+	BASharedPtr<SerializedObject> PopTaskQueue();
+	void PushTaskQueue(BASharedPtr<SerializedObject>& object);
 };
 
