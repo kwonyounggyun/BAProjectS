@@ -1,5 +1,4 @@
 #pragma once
-#include "BABufferContainer.h"
 
 #if !defined(MAX_NETWORK_BUF_COUNT)
     #define MAX_NETWORK_BUF_COUNT 5

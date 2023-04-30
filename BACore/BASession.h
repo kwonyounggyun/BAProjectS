@@ -3,12 +3,12 @@
 #include "NetMessage.h"
 #include "BAObject.h"
 #include "SerializedObject.h"
+#include "INetworkObject.h"
 
 /*
 * 네트워크 엔진과 플레이어 각체의 연결을 담당
 */
 
-class INetworkObject;
 class BASocket;
 class BASession : public BASharedObject<BASession>
 {

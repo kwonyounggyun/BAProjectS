@@ -1,6 +1,7 @@
 #pragma once
 #include "BANetworkEngine.h"
 #include <vector>
+#include "BAPacket.h"
 
 class TestServer : public BANetworkEngine
 {

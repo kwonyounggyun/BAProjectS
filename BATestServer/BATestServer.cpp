@@ -3,14 +3,18 @@
 
 #include <iostream>
 #include "TestServer.h"
+#include "GameServer.h"
 
 int main()
 {
-    TestServer server;
+    GameServer server;
     
+
+    std::cout << sizeof(NetMessage);
+
     NetworkConfig config;
-    config._max_client = 100;
-    config._port = 9090;
+    config._max_client = 1000;
+    config._port = 9999;
     config._option._recv_buf_size = 1000;
     config._option._send_buf_size = 1000;
     config._option._keep_alive = false;
@@ -19,7 +23,10 @@ int main()
     configs.push_back(config);
     server.Initialize(configs);
     server.StartNetwork(5);
-    while (1);
+    server.StartTask(5);
+    getchar();
+
+    server.Release();
 }
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴

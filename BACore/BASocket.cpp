@@ -1,3 +1,4 @@
+#include "BACore.h"
 #include "BASocket.h"
 #include "BAOverlapped.h"
 #include "BASession.h"

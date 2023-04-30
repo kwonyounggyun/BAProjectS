@@ -16,15 +16,18 @@ int main()
     option._keep_alive = false;
     option._recv_buf_size = 1000;
     option._send_buf_size = 1000;
+    std::cout << sizeof(reply_su_move) << " " << sizeof(request_us_move)<<  std::endl;
 
     SOCKADDR_IN addr;
     InetPton(AF_INET, L"127.0.0.1", &addr.sin_addr.S_un.S_addr);
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(9090);
+    addr.sin_port = htons(9999);
 
     client.Connect(addr, option);
-
-    while (1) {}
+    client.Loop();
+    
+    getchar();
+    client.Release();
     std::cout << "Hello World!\n";
 }
 

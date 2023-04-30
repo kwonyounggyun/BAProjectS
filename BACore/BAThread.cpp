@@ -1,3 +1,4 @@
+#include "BACore.h"
 #include "BAThread.h"
 
 void Work(std::atomic_bool* state, std::function<void(std::atomic_bool*)> call)
@@ -15,6 +16,7 @@ void BAThread::Run(std::function<void(std::atomic_bool*)> call)
 
 void BAThread::Stop()
 {
+	PreStop();
 	_state.store(false);
 }
 

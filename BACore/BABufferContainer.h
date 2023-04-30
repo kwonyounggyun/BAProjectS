@@ -1,5 +1,4 @@
 #pragma once
-#include "BACore.h"
 
 #if !defined(MAX_UNIT_BUFFER_SIZE)
     #define MAX_UNIT_BUFFER_SIZE (MAX_PACKET_SIZE * 10)

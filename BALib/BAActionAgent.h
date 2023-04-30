@@ -14,7 +14,10 @@ private:
 	std::shared_ptr<Action> _action;
 
 public:
-	BAActionAgent() : _owner(nullptr) {}
+	BAActionAgent() : _owner(nullptr) 
+	{
+		_action = std::make_shared<IdleAction>();
+	}
 	~BAActionAgent() {}
 
 	void SetOwner(BAActor* actor) { _owner = actor; }
@@ -22,7 +25,6 @@ public:
 private:
 	bool CheckActionable(ActionType type);
 public:
-	void ChangeAction(std::shared_ptr<Action> action);
 	void Update();
 };
 

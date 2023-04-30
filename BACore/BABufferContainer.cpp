@@ -1,3 +1,4 @@
+#include "BACore.h"
 #include "BABufferContainer.h"
 
 __int32 BABufferUnit::Write(char* buf, __int32 size)

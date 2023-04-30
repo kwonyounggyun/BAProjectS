@@ -16,6 +16,12 @@
     <Filter Include="Packet">
       <UniqueIdentifier>{2a03cb6e-616b-48d2-8599-67178f6568aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{cd44f8c0-108b-44c1-8cc2-c021edf75027}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Actor">
+      <UniqueIdentifier>{e556f1fd-80ed-41fe-a799-3ed10479320b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -25,9 +31,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BaseFrame.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ActorManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BAActor.h">
@@ -57,6 +60,18 @@
     <ClInclude Include="GameServer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="WorldManager.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorManager.h">
+      <Filter>Actor</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Sector.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BALib.cpp">
@@ -66,9 +81,6 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BaseFrame.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ActorManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BAActor.cpp">
@@ -87,6 +99,18 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GameServer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldManager.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="ActorManager.cpp">
+      <Filter>Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="Sector.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,9 +1,14 @@
 #include "pch.h"
 #include "BAActor.h"
 
-void BAActor::Update()
+void BAActor::Update(__time64_t time)
 {
-	_action_agent.Update();
+	if (time > GetLastUpdateTime() + 300)
+	{
+		_action_agent.Update();
+
+		SetLastUpdateTime(time);
+	}
 }
 
 void BAActor::Move(const BVector3D& direction, const BVector3D& forward)
@@ -12,7 +17,7 @@ void BAActor::Move(const BVector3D& direction, const BVector3D& forward)
 
 	if (direction.DotProduct(forward) <= 4)
 	{
-		move = direction * (_speed * 0.8);
+		move = direction * (_speed * (float)0.8);
 	}
 	else
 	{

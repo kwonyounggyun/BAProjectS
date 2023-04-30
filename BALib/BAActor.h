@@ -6,15 +6,17 @@
 class BAActionAgent;
 class BAActor : public SerializedObject
 {
-private:
+protected:
 	BAActionAgent _action_agent;
 	BVector3D _pos;
 	BVector3D _forward;
 	float _speed;
 
 protected:
-	void Update();
-	BVector3D GetPos() { return _pos; }
+	virtual void Update(__time64_t time);
+
+public:
+	BVector3D GetPos() const { return _pos; }
 
 public:
 	BAActor() : _speed(0) 
@@ -23,8 +25,11 @@ public:
 	}
 	virtual ~BAActor() {}
 
+	virtual void Initailize() {};
 public:
 	//Action
 	virtual void Move(const BVector3D& direction, const BVector3D& forward);
+
+	BAActionAgent* GetActionAgent() { return &_action_agent; }
 };
 

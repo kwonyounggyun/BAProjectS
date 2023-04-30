@@ -7,12 +7,12 @@ class BAMemoryPool
 private:
 	static unsigned char* m_free_ptr;
 	static bool m_fix;
-	static BACS cs;
+	static BALock cs;
 
 public:
 	static void* operator new(size_t size)
 	{
-		auto lock = BASmartCS(&cs);
+		BALockGuard lock(cs);
 		if (m_free_ptr == nullptr && m_fix == false)
 			Alloc();
 		else if (m_free_ptr == nullptr && m_fix == true)
@@ -25,7 +25,7 @@ public:
 
 	static void operator delete(void* ptr) noexcept
 	{
-		auto lock = BASmartCS(&cs);
+		BALockGuard lock(cs);
 		memset(ptr, 0x00, sizeof(T));
 		*reinterpret_cast<unsigned char**>(ptr) = m_free_ptr;
 		m_free_ptr = reinterpret_cast<unsigned char*>(ptr);
@@ -58,4 +58,4 @@ template <typename T, int POOL_SIZE, bool FIX_SIZE>
 bool BAMemoryPool<T, POOL_SIZE, FIX_SIZE>::m_fix = false;
 
 template <typename T, int POOL_SIZE, bool FIX_SIZE>
-BACS BAMemoryPool<T, POOL_SIZE, FIX_SIZE>::cs;
+BALock BAMemoryPool<T, POOL_SIZE, FIX_SIZE>::cs;

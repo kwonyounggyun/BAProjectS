@@ -21,8 +21,8 @@ public:
 class SerializedObject
 {
 private:
-	BACS _cs;
-	std::list<std::shared_ptr<Task>> _serializer;
+	BALock _cs;
+	std::list<std::shared_ptr<ITask>> _serializer;
 	__time64_t _last_update;
 
 public:
@@ -32,18 +32,18 @@ public:
 	void SetLastUpdateTime(__time64_t update_time) { _last_update = update_time; }
 	__time64_t GetLastUpdateTime() { return _last_update; }
 
-	void AddTask(std::shared_ptr<Task> task)
+	void AddTask(std::shared_ptr<ITask> task)
 	{
-		BASmartCS lock(&_cs);
+		BALockGuard lock(_cs);
 		_serializer.push_back(task);
 	}
 	virtual void Update(time_t time) {}
 	bool Work()
 	{
 		__time64_t time = GetTickCount64();
-		std::list<std::shared_ptr<Task>> list;
+		std::list<std::shared_ptr<ITask>> list;
 		{
-			BASmartCS lock(&_cs);
+			BALockGuard lock(_cs);
 		
 			list.splice(list.begin(), _serializer);
 		}
@@ -68,12 +68,4 @@ public:
 
 		return true;
 	}
-};
-
-//SerializedObject와 연결을 위한 인터페이스
-class INetworkObject
-{
-public:
-	virtual void CallHandle(DWORD protocol, void* msg) = 0;
-	virtual void AddTask(std::shared_ptr<Task> task) = 0;
 };

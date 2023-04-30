@@ -1,15 +1,26 @@
 #include "pch.h"
 #include "NetPlayerHandler.h"
-#include "BAPacket.h"
-#include "BAPlayer.h"
+
+void NetPlayerHandler::Init()
+{
+	_handle[_request_us_move] = &NetPlayerHandler::Request_US_Move;
+}
 
 void NetPlayerHandler::Call(DWORD protocol, void* msg, void* obj)
 {
-	void (*fn[10]) (void* msg, void* obj);
+	auto iter = _handle.find(protocol);
+	if(iter != _handle.end())
+		(iter->second)(msg, obj);
 }
 
-void NetPlayerHandler::Request_US_Move(void* msg, void* obj)
+bool NetPlayerHandler::Request_US_Move(void* msg, void* obj)
 {
 	auto player = static_cast<BAPlayer*>(obj);
 	auto packet_msg = static_cast<request_us_move*>(msg);
+
+	auto action = std::make_shared<MoveAction>(packet_msg->_move, packet_msg->_forward);
+
+	action->Excute(player);
+
+	return true;
 }

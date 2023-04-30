@@ -2,18 +2,34 @@
 #include "GameServer.h"
 #include "ActorManager.h"
 
+bool GameServer::Initialize(std::vector<NetworkConfig>& configs)
+{
+	BaseFrame::Initialize(configs);
+	GetPlayerHandler()->Init();
+	return false;
+}
+
 void GameServer::OnAcceptComplete(std::shared_ptr<BASession>& session)
 {
 	{
-		BASmartCS lock(&_cs);
+		BALockGuard lock(_cs);
 		_connect_sessions.insert(std::make_pair((ULONGLONG)session.get(), session));
 	}
 	auto player = GetActorManager()->CreatePlayer(session.get());
+	auto object = std::dynamic_pointer_cast<SerializedObject>(player);
+	PushTaskQueue(object);
+
+	auto msg  = NetMessage::CreateMsg();
+	msg->SetProtocol(_inform_player_data);
+	auto packet = msg->GetBuffer<inform_player_data>();
+	packet->_pos = player->GetPos();
+	msg->SetSize(packet->GetSize());
+	player->SendMsg(msg);
 }
 
 void GameServer::OnConnectComplete(std::shared_ptr<BASession>& session)
 {
-	BASmartCS lock(&_cs);
+	BALockGuard lock(_cs);
 	_connect_sessions.insert(std::make_pair((ULONGLONG)session.get(), session));
 }
 

@@ -1,8 +1,5 @@
 #pragma once
 
-/*
-* Type으로 사용하는 클래스는 void Process(), void Complete() 함수를 멤버로 가지고 있어야한다.
-*/
 template<typename T>
 class BAScheduler
 {

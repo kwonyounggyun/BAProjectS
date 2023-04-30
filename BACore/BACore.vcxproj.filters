@@ -13,65 +13,65 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{b0586ca2-4de5-411d-bab0-fe25eca95a45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\header">
+      <UniqueIdentifier>{08fdd9d3-65c4-4a15-9208-a0a44a30cd86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\source">
+      <UniqueIdentifier>{56ab0f05-c4af-4cfa-9bfd-3cecc8382d02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Database">
+      <UniqueIdentifier>{6ef4ba2f-fb6c-4c8b-9524-639c8a2b1a38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BASocket.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BANetworkEngine.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="BABufferContainer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BANetworkBuffer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BAOverlapped.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BASession.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BAEncryptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="NetMessage.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="SerializedObject.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BAObject.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BAThread.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="BANetworkBuffer.cpp">
+      <Filter>Network\source</Filter>
+    </ClCompile>
+    <ClCompile Include="BANetworkEngine.cpp">
+      <Filter>Network\source</Filter>
+    </ClCompile>
+    <ClCompile Include="BASocket.cpp">
+      <Filter>Network\source</Filter>
+    </ClCompile>
+    <ClCompile Include="NetMessage.cpp">
+      <Filter>Network\source</Filter>
+    </ClCompile>
+    <ClCompile Include="BAOverlapped.cpp">
+      <Filter>Network\header</Filter>
+    </ClCompile>
+    <ClCompile Include="BASession.cpp">
+      <Filter>Network\source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BACircularQueue.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BACriticalSection.h">
+    <ClInclude Include="BALock.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BAMemoryPool.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BAOverlapped.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BASocket.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BANetworkEngine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Log.h">
@@ -80,19 +80,10 @@
     <ClInclude Include="BABufferContainer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BANetworkBuffer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="BAScheduler.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="NetMessage.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="BASingleton.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BASession.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BACore.h">
@@ -113,14 +104,35 @@
     <ClInclude Include="BAObject.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="NetworkHandler.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="BAThread.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BARandom.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkHandler.h">
+      <Filter>Network\header</Filter>
+    </ClInclude>
+    <ClInclude Include="NetMessage.h">
+      <Filter>Network\header</Filter>
+    </ClInclude>
+    <ClInclude Include="BASocket.h">
+      <Filter>Network\header</Filter>
+    </ClInclude>
+    <ClInclude Include="BASession.h">
+      <Filter>Network\header</Filter>
+    </ClInclude>
+    <ClInclude Include="BANetworkEngine.h">
+      <Filter>Network\header</Filter>
+    </ClInclude>
+    <ClInclude Include="BANetworkBuffer.h">
+      <Filter>Network\header</Filter>
+    </ClInclude>
+    <ClInclude Include="BAOverlapped.h">
+      <Filter>Network\source</Filter>
+    </ClInclude>
+    <ClInclude Include="INetworkObject.h">
+      <Filter>Network\header</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

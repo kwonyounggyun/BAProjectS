@@ -19,11 +19,18 @@
 #include <queue>
 #include <functional>
 
-#include "BACriticalSection.h"
+#include <sql.h>
+#include <sqlext.h>
+#include <sal.h>
+
+typedef std::basic_string<TCHAR> tstring;
+
+#include "BALock.h"
 #include "BAMemoryPool.h"
 #include "BACircularQueue.h"
 #include "BAScheduler.h"
 #include "BASingleton.h"
+#include "BAThread.h"
 
 #include "Log.h"
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "BACore.h"
 
 class BASocket;
 class BANetworkEngine;

@@ -1,10 +1,6 @@
 #pragma once
-
-#include "BAOverlapped.h"
 #include "BASocket.h"
-#include "BACore.h"
 #include "BASession.h"
-#include "BAThread.h"
 
 class BASocket;
 class BASession;
@@ -28,7 +24,7 @@ private:
 
 	HANDLE _iocp_handle;
 
-	BACS _cs;
+	BALock _cs;
 
 private:
 	bool RegistSocket(std::shared_ptr<BASocket>& socket);

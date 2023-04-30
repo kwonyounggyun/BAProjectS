@@ -25,15 +25,7 @@ bool BAActionAgent::CheckActionable(ActionType type)
 	return false;
 }
 
-void BAActionAgent::ChangeAction(std::shared_ptr<Action> action)
-{
-	if (false == CheckActionable(action->GetType()))
-		return;
-	
-	_action = action;
-}
-
 void BAActionAgent::Update()
 {
-	_action->Excute(_owner);
+
 }

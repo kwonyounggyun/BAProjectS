@@ -1,8 +1,10 @@
+#include "BACore.h"
+#include "BAOverlapped.h"
 #include "BANetworkEngine.h"
 
 bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
 {
-	BASmartCS lock(&_cs);
+	BALockGuard lock(_cs);
 
 	auto key = (ULONG_PTR)socket.get();
 
@@ -17,7 +19,7 @@ bool BANetworkEngine::RegistSocket(std::shared_ptr<BASocket>& socket)
 
 bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
 {
-	BASmartCS lock(&_cs);
+	BALockGuard lock(_cs);
 
 	auto iter = _sockets.find(key);
 	if(iter != _sockets.end())

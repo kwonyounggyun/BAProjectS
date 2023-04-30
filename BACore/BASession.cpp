@@ -1,3 +1,4 @@
+#include "BACore.h"
 #include "BASession.h"
 #include "BASocket.h"
 #include "BAOverlapped.h"
@@ -37,14 +38,14 @@ void BASession::EnqueueMsg(std::shared_ptr<NetMessage>& msg)
 			obj_ptr->CallHandle(msg->GetProtocol(), msg->GetBuffer<char>());
 			});
 
-		obj->AddTask(task);
+		obj->AddNetworkTask(task);
 	}
 }
 
 
 void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
 {
-	BASmartCS lock(&_cs);
+	//BASmartCS lock(&_cs);
 	if (auto socket = _socket.lock())
 	{
 		if (IsEncryt())
@@ -52,6 +53,7 @@ void BASession::SendMsg(std::shared_ptr<NetMessage>& msg)
 			msg->Encrypt();
 		}
 
-		socket->Send(msg.get(), msg->TotalSize());
+		if (false == socket->Send(msg.get(), msg->TotalSize()))
+			ErrorLog("SendError");
 	}
 }

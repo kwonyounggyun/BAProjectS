@@ -27,9 +27,18 @@ public:
 	virtual void Excute(BAActor* actor) = 0;
 };
 
+class IdleAction : public Action
+{
+public:
+	IdleAction() : Action(ActionType::eIDLE) {}
+	virtual ~IdleAction() {}
+
+	virtual void Excute(BAActor* actor);
+};
+
 class MoveAction : public Action
 {
-private:
+public:
 	BVector3D _move_direction;
 	BVector3D _forward;
 public:

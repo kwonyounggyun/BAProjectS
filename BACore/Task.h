@@ -1,14 +1,14 @@
 #pragma once
 #include <functional>
-#include "BASession.h"
 
-class Task
+class ITask
 {
 public:
+	virtual ~ITask() {}
 	virtual bool Execute() = 0;
 };
 
-class PacketTask : public Task
+class PacketTask : public ITask
 {
 	std::function<void ()>_callback;
 public:
@@ -20,4 +20,12 @@ public:
 		_callback();
 		return false;
 	}
+};
+
+class DBTask : public ITask
+{
+public:
+	DBTask() {}
+	virtual ~DBTask() {}
+	virtual bool Execute() = 0;
 };
