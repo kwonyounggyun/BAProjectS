@@ -10,7 +10,7 @@
 struct BABufferUnit
 {
 public:
-    BABufferUnit() :_capacity(sizeof(_buf)), _head(0), _tail(0) {}
+    BABufferUnit() : _capacity(sizeof(_buf)), _head(0), _tail(0) {}
 
     __int32 Write(char* buf, __int32 size);
     __int32 Read(char* buf, __int32 size);

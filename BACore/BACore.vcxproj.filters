@@ -60,6 +60,9 @@
     <ClCompile Include="BASession.cpp">
       <Filter>Network\source</Filter>
     </ClCompile>
+    <ClCompile Include="Noncopyable.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BACircularQueue.h">

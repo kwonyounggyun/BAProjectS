@@ -1,26 +1,26 @@
 #include "BACore.h"
 #include "BAThread.h"
 
-void Work(std::atomic_bool* state, std::function<void(std::atomic_bool*)> call)
+void Work(volatile bool& state, std::function<void(volatile bool&)> call)
 {
 	call(state);
 
 	return;
 }
 
-void BAThread::Run(std::function<void(std::atomic_bool*)> call)
+void BAThread::Run(std::function<void(volatile bool&)> call)
 {
-	_state.store(true, std::memory_order_release);
-	_thread = BA_NEW std::thread(Work, &_state, call);
+	_state = true;
+	_thread = BA_NEW std::thread(Work, std::ref(_state), call);
 }
 
 void BAThread::Stop()
 {
 	PreStop();
-	_state.store(false);
+	_state = false;
 }
 
-void BAThread::Join()
+bool BAThread::Join()
 {
 	if (_thread != nullptr)
 	{
@@ -29,4 +29,6 @@ void BAThread::Join()
 		InfoLog("thread stop!!");
 		_thread = nullptr;
 	}
+
+	return true;
 }

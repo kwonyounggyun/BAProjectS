@@ -20,7 +20,7 @@ class BANetworkEngine
 private:
 	std::map<ULONG_PTR, NetworkConfig> _network_configs;
 	std::map<ULONG_PTR, BASharedPtr<BASocket>> _sockets;
-	std::vector<BASharedPtr<BAThread>> _threads;
+	std::vector<BASharedPtr<IThread>> _threads;
 
 	HANDLE _iocp_handle;
 
@@ -53,4 +53,6 @@ public:
 	virtual bool Release();
 
 	virtual void RecvPacketProcess(NetMessage* msg) { delete msg; }
+
+	void NetworkThreadLoop();
 };

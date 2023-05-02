@@ -18,7 +18,7 @@ public:
 	~ScopePtr() { BA_DELETE(_ptr) }
 };
 
-class SerializedObject
+class SerializedObject : Noncopyable
 {
 private:
 	BALock _cs;
@@ -26,7 +26,7 @@ private:
 	__time64_t _last_update;
 
 public:
-	SerializedObject() {}
+	SerializedObject() :_last_update(0) {}
 	virtual ~SerializedObject() = 0 {}
 
 	void SetLastUpdateTime(__time64_t update_time) { _last_update = update_time; }

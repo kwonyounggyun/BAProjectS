@@ -134,47 +134,9 @@ bool BANetworkEngine::StartNetwork(int thread_count)
 {
 	for (int i = 0; i < thread_count; i++)
 	{
-		/*std::thread* t = BA_NEW std::thread(WorkThread, this);
-		_threads.push_back(t);*/
-		auto engine = this;
-		auto thread = BAMakeShared<BAThread>();
-		thread->Run([engine](std::atomic_bool* state)->void {
-			while ((*state).load())
-			{
-				DWORD trans_byte = 0;
-				ULONG_PTR completion_key = 0;
-				BAOverlapped* overlapped = nullptr;
-
-				if (false == GetQueuedCompletionStatus(engine->GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
-				{
-					if (overlapped != NULL)
-					{
-						ErrorLog("Client unexpected termination!!");
-						auto socket = overlapped->GetSocket();
-						if (socket != nullptr)
-							engine->OnClose(socket);
-
-						OverlappedTaskSeparator::Delete(overlapped);
-					}
-					else
-					{
-						//IOCP close
-						if (GetLastError() == ERROR_ABANDONED_WAIT_0)
-						{
-							InfoLog("CompletionPort Error");
-							break;
-						}
-					}
-
-					continue;
-				}
-
-				overlapped->SetEngine(engine);
-				overlapped->SetTransByte(trans_byte);
-				OverlappedTaskSeparator::Work(overlapped);
-			}
-			});
-		_threads.push_back(thread);
+		auto async = BAMakeShared<BAAsyncThread<void>>();
+		async->Run(std::bind(&BANetworkEngine::NetworkThreadLoop, this), true);
+		_threads.push_back(std::static_pointer_cast<IThread>(async));
 	}
 
 	for (auto listen : _network_configs)
@@ -231,4 +193,43 @@ bool BANetworkEngine::Release()
 	_threads.clear();
 
 	return true;
+}
+
+void BANetworkEngine::NetworkThreadLoop()
+{
+	DWORD trans_byte = 0;
+	ULONG_PTR completion_key = 0;
+	BAOverlapped* overlapped = nullptr;
+	
+	auto process = [](BANetworkEngine* engine, BAOverlapped* overlapped, DWORD trans_byte)->void {
+		overlapped->SetEngine(engine);
+		overlapped->SetTransByte(trans_byte);
+		OverlappedTaskSeparator::Work(overlapped);
+	};
+
+	if (false == GetQueuedCompletionStatus(GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
+	{
+		if (overlapped != NULL)
+		{
+			ErrorLog("Client unexpected termination!!");
+			auto socket = overlapped->GetSocket();
+			if (socket != nullptr)
+				OnClose(socket);
+
+			OverlappedTaskSeparator::Delete(overlapped);
+		}
+		else
+		{
+			//IOCP close
+			if (GetLastError() == ERROR_ABANDONED_WAIT_0)
+			{
+				InfoLog("CompletionPort Error");
+				process(this, overlapped, trans_byte);
+			}
+		}
+
+		return;
+	}
+
+	process(this, overlapped, trans_byte);
 }

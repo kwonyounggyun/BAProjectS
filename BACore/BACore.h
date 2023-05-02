@@ -28,6 +28,7 @@ typedef std::basic_string<TCHAR> tstring;
 #define BAWeakPtr std::weak_ptr
 #define BAMakeShared std::make_shared
 
+#include "Noncopyable.h"
 #include "BALock.h"
 #include "BAMemoryPool.h"
 #include "BACircularQueue.h"

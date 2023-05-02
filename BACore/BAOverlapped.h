@@ -47,7 +47,7 @@ class BAOverlapped_Send : public BAOverlapped
 public:
 	DWORD _send_byte;
 public:
-	explicit BAOverlapped_Send(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket) 
+	explicit BAOverlapped_Send(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket), _send_byte(0)
 	{
 		_type = Overlapped_type::SEND;
 	}

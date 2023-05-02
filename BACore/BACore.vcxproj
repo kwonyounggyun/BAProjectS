@@ -172,11 +172,18 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+      <Command>copy $(OutDirFullPath)\$(ProjectName)D.lib D:\Projects\BAProject\Source\ThirdParty\BANetworkEngine\lib\
+copy $(ProjectDir)\*.h D:\Projects\BAProject\Source\ThirdParty\BANetworkEngine\inc\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -193,6 +200,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutDirFullPath)\$(ProjectName).lib D:\Projects\BAProject\Source\ThirdParty\BANetworkEngine\lib\
+copy $(ProjectDir)\*.h D:\Projects\BAProject\Source\ThirdParty\BANetworkEngine\inc\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unreal_release|x64'">
     <ClCompile>
@@ -220,6 +231,7 @@
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="BAThread.cpp" />
     <ClCompile Include="NetMessage.cpp" />
+    <ClCompile Include="Noncopyable.h" />
     <ClCompile Include="SerializedObject.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
