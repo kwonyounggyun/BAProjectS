@@ -10,10 +10,8 @@ using THREAD_TASKS = std::queue<BASharedPtr<SerializedObject>>;
 class BaseFrame : public BANetworkEngine
 {
 private:
-	std::vector<BASharedPtr<BAThread>> _task_threads;
+	std::vector<BASharedPtr<BAAsyncThread<void>>> _task_threads;
 
-	/*std::vector<THREAD_TASKS> _vec_thread_tasks;
-	std::queue<THREAD_TASKS*> _queue_thread_tasks;*/
 	THREAD_TASKS _queue_thread_tasks;
 
 	BALock _cs;

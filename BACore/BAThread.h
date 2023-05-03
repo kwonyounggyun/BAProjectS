@@ -20,23 +20,6 @@ public:
 	virtual bool Join() = 0;
 };
 
-class BAThread : public IThread
-{
-protected:
-	volatile bool _state;
-	std::thread* _thread;
-
-protected:
-	virtual void PreStop() {};
-
-public:
-	BAThread() : _state(false), _thread(nullptr) {}
-	~BAThread() {}
-	void Run(std::function<void(volatile bool&)> call);
-	virtual void Stop() override;
-	virtual bool Join() override;
-};
-
 template<typename T, typename ... ARGS>
 class BAAsyncThread : public IThread, Noncopyable
 {

@@ -57,23 +57,20 @@ bool BaseFrame::StartTask(int thread_count)
 	for (int i = 0; i < thread_count; i++)
 	{
 		auto frame = this;
-		auto thread = BAMakeShared<BAThread>();
-		thread->Run([frame](std::atomic_bool* state)->void
+
+		auto async_t = BAMakeShared<BAAsyncThread<void>>();
+		async_t->Run([frame]()->void
 			{
-				while ((*state).load())
-				{
-					auto object = frame->PopTaskQueue();
-					if (object == nullptr)
-						continue;
+				auto object = frame->PopTaskQueue();
+				if (object == nullptr)
+					return;
 
-					if (false == object->Work())
-						continue;
+				if (false == object->Work())
+					return;
 
-					frame->PushTaskQueue(object);
-				}
-			});
-
-		_task_threads.push_back(thread);
+				frame->PushTaskQueue(object);
+			}, true);
+		_task_threads.push_back(async_t);
 	}
 
 	return true;

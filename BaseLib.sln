@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.32112.339
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33027.164
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BuildAll", "BuildAll\BuildAll.vcxproj", "{48D52C2B-2717-402C-91EF-1131E16F1F41}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BACore", "BACore\BACore.vcxproj", "{C6FA16FB-BC0B-44B6-8860-11CC86B7EE3E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BALib", "BALib\BALib.vcxproj", "{F68611AC-BFED-400E-BB0D-F153E9ED8BD5}"
@@ -37,22 +35,6 @@ Global
 		Unreal_release|x86 = Unreal_release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Debug|Any CPU.Build.0 = Debug|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Debug|x64.ActiveCfg = Debug|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Debug|x86.ActiveCfg = Debug|Win32
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Debug|x86.Build.0 = Debug|Win32
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Release|Any CPU.ActiveCfg = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Release|Any CPU.Build.0 = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Release|x64.ActiveCfg = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Release|x86.ActiveCfg = Release|Win32
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Release|x86.Build.0 = Release|Win32
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Unreal_release|Any CPU.ActiveCfg = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Unreal_release|Any CPU.Build.0 = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Unreal_release|x64.ActiveCfg = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Unreal_release|x64.Build.0 = Release|x64
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Unreal_release|x86.ActiveCfg = Release|Win32
-		{48D52C2B-2717-402C-91EF-1131E16F1F41}.Unreal_release|x86.Build.0 = Release|Win32
 		{C6FA16FB-BC0B-44B6-8860-11CC86B7EE3E}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{C6FA16FB-BC0B-44B6-8860-11CC86B7EE3E}.Debug|Any CPU.Build.0 = Debug|x64
 		{C6FA16FB-BC0B-44B6-8860-11CC86B7EE3E}.Debug|x64.ActiveCfg = Debug|x64
