@@ -31,3 +31,15 @@ void BAOverlapped_Connect::CompleteIO()
 	_engine->OnConnect(_connect, _trans_byte);
 	_connect->OnConnect(_trans_byte);
 }
+
+void BAOverlapped_PreConnect::CompleteIO()
+{
+	if (auto socket = _socket.lock())
+		_engine->OnPreConnct(socket, _trans_byte);
+}
+
+void BAOverlapped_Close::CompleteIO()
+{
+	if (auto socket = _socket.lock())
+		_engine->OnClose(socket);
+}

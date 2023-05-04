@@ -253,7 +253,9 @@ copy $(ProjectDir)\*.h D:\Projects\BAProject\Source\ThirdParty\BANetworkEngine\i
     <ClInclude Include="BASingleton.h" />
     <ClInclude Include="BASocket.h" />
     <ClInclude Include="BAThread.h" />
+    <ClInclude Include="BATimer.h" />
     <ClInclude Include="INetworkObject.h" />
+    <ClInclude Include="MultiToSingleList.h" />
     <ClInclude Include="NetMessage.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="NetworkHandler.h" />

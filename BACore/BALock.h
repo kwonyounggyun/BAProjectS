@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+
 using BALock = std::mutex;
 using BALockGuard = std::lock_guard<BALock>;
 
@@ -62,44 +63,16 @@ public:
 using BACS = BACriticalSection;
 using BASmartCS = BASmartCriticalSection;
 
-
-class BATimer
-{
-private:
-	ULONGLONG _start_time;
-	ULONGLONG _delta;
-	bool _resetable;
-
-public:
-	BATimer(ULONGLONG delta_time, bool resetable = false) : _delta(delta_time), _resetable(resetable)
-	{
-		_start_time = GetTickCount64();
-	}
-
-	bool CheckTimer()
-	{
-		auto cur = GetTickCount64();
-		if (cur - _start_time < _delta)
-			return false;
-
-		if (_resetable)
-			Reset(cur, _delta);
-
-		return true;
-	}
-
-	void Reset(ULONGLONG start_time, ULONGLONG delta_time)
-	{
-		_start_time = start_time;
-		_delta = delta_time;
-	}
-};
-
 class BASpinLock
 {
 private:
 	std::atomic_flag _flag;
+
+	
 public:
+	BASpinLock() {}
+	~BASpinLock() {}
+
 	bool TryLock()
 	{
 		if (false == std::atomic_flag_test_and_set(&_flag))
@@ -107,18 +80,12 @@ public:
 		return false;
 	}
 
-	bool Lock(time_t time_out)
+	void lock()
 	{
-		BATimer timer(time_out);
-		while (!TryLock())
-		{
-			if (timer.CheckTimer())
-				return false;
-		}
-		return true;
+		while (!TryLock());
 	}
 
-	bool UnLock()
+	void unlock()
 	{
 		_flag.clear();
 	}

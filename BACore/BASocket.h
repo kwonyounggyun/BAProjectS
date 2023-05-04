@@ -33,6 +33,8 @@ public:
 	const SOCKET GetSocket() { return _socket; }
 
 	void SetSession(BASharedPtr<BASession>& session) { _session = session; }
+	inline BASharedPtr<BASession> GetSession() const { return _session; }
+
 	bool Recv();
 	bool  Send(void* buf, __int32 len);
 

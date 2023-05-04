@@ -45,7 +45,9 @@ void BASession::EnqueueMsg(BASharedPtr<NetMessage>& msg)
 
 void BASession::SendMsg(BASharedPtr<NetMessage>& msg)
 {
-	//BASmartCS lock(&_cs);
+	if (GetState() != SessionState::ACTIVE)
+		return;
+
 	if (auto socket = _socket.lock())
 	{
 		if (IsEncryt())
@@ -55,5 +57,13 @@ void BASession::SendMsg(BASharedPtr<NetMessage>& msg)
 
 		if (false == socket->Send(msg.get(), msg->TotalSize()))
 			ErrorLog("SendError");
+	}
+}
+
+void BASession::Close()
+{
+	if (auto socket = _socket.lock())
+	{
+		socket->Shutdown();
 	}
 }

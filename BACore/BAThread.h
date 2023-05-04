@@ -50,16 +50,16 @@ public:
 		_call = call;
 		if (loop)
 		{
-			_fu = std::async(std::launch::async, [](volatile bool& state, Func& call, ARGS ... args)->T {
+			_fu = std::async(std::launch::async, std::bind([](volatile bool& state, Func& call, ARGS ... args)->T {
 				while (state)
 				{
 					call(args ...);
 				}
-				}, std::ref(_state), std::ref(_call), args ...);
+				}, _state, _call, args ...));
 		}
 		else
 		{
-			_fu = std::async(std::launch::async, call, args ...);
+			_fu = std::async(std::launch::async, std::bind(call, args ...));
 		}
 	}
 };

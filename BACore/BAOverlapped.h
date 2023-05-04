@@ -7,9 +7,11 @@ enum class Overlapped_type : __int32
 {
 	NONE = -1,
 	ACCEPT = 0,
-	CONNECT = 1,
-	SEND = 2,
-	RECV = 3,
+	PRE_CONNECT = 1,
+	CONNECT = 2,
+	SEND = 3,
+	RECV = 4,
+	CLOSE = 5,
 };
 
 class BAOverlapped : public OVERLAPPED
@@ -68,6 +70,19 @@ public:
 	void SetClient(BASharedPtr<BASocket>& client) { _client = client; }
 };
 
+class BAOverlapped_PreConnect : public BAOverlapped
+{
+private:
+	BASharedPtr<BASocket> _connect;
+public:
+	explicit BAOverlapped_PreConnect(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket)
+	{
+		_type = Overlapped_type::PRE_CONNECT;
+		_connect = socket.lock();
+	}
+	void CompleteIO();
+};
+
 class BAOverlapped_Connect : public BAOverlapped
 {
 private:
@@ -77,6 +92,16 @@ public:
 	{
 		_type = Overlapped_type::CONNECT;
 		_connect = socket.lock();
+	}
+	void CompleteIO();
+};
+
+class BAOverlapped_Close : public BAOverlapped
+{
+public:
+	explicit BAOverlapped_Close(BAWeakPtr<BASocket>& socket) : BAOverlapped(socket)
+	{
+		_type = Overlapped_type::CLOSE;
 	}
 	void CompleteIO();
 };
@@ -91,6 +116,9 @@ public:
 		case Overlapped_type::ACCEPT:
 			BA_DELETE(static_cast<BAOverlapped_Accept*>(overlapped));
 			break;
+		case Overlapped_type::PRE_CONNECT:
+			BA_DELETE(static_cast<BAOverlapped_PreConnect*>(overlapped));
+			break;
 		case Overlapped_type::CONNECT:
 			BA_DELETE(static_cast<BAOverlapped_Connect*>(overlapped));
 			break;
@@ -99,6 +127,9 @@ public:
 			break;
 		case Overlapped_type::RECV:
 			BA_DELETE(static_cast<BAOverlapped_Recv*>(overlapped));
+			break;
+		case Overlapped_type::CLOSE:
+			BA_DELETE(static_cast<BAOverlapped_Close*>(overlapped));
 			break;
 		}
 	}
@@ -110,6 +141,13 @@ public:
 		case Overlapped_type::ACCEPT:
 		{
 			BAOverlapped_Accept* over = static_cast<BAOverlapped_Accept*>(overlapped);
+			over->CompleteIO();
+			BA_DELETE(over);
+			break;
+		}
+		case Overlapped_type::PRE_CONNECT:
+		{
+			BAOverlapped_PreConnect* over = static_cast<BAOverlapped_PreConnect*>(overlapped);
 			over->CompleteIO();
 			BA_DELETE(over);
 			break;
@@ -131,6 +169,13 @@ public:
 		case Overlapped_type::RECV:
 		{
 			BAOverlapped_Recv* over = static_cast<BAOverlapped_Recv*>(overlapped);
+			over->CompleteIO();
+			BA_DELETE(over);
+			break;
+		}
+		case Overlapped_type::CLOSE:
+		{
+			BAOverlapped_Close* over = static_cast<BAOverlapped_Close*>(overlapped);
 			over->CompleteIO();
 			BA_DELETE(over);
 			break;

@@ -161,6 +161,8 @@ void BASocket::Close()
 {
 	if (_socket != INVALID_SOCKET)
 	{
+		if(_session != nullptr)
+			_session->SetState(SessionState::DISCONNECT);
 		closesocket(_socket);
 		_socket = INVALID_SOCKET;
 	}

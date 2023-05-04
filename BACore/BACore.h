@@ -29,6 +29,7 @@ typedef std::basic_string<TCHAR> tstring;
 #define BAMakeShared std::make_shared
 
 #include "Noncopyable.h"
+#include "BATimer.h"
 #include "BALock.h"
 #include "BAMemoryPool.h"
 #include "BACircularQueue.h"

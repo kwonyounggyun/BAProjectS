@@ -2,13 +2,11 @@
 #include "BAOverlapped.h"
 #include "BANetworkEngine.h"
 
-bool BANetworkEngine::RegistSocket(BASharedPtr<BASocket>& socket)
+bool BANetworkEngine::RegistSocket(BASharedPtr<BASocket>& socket, LISTEN_PTR listen_key)
 {
-	BALockGuard lock(_cs);
-
 	auto key = (ULONG_PTR)socket.get();
 
-	auto result = _sockets.insert(std::make_pair(key, socket));
+	auto result = _sockets.insert(std::make_pair(socket, listen_key));
 	auto engine = this;
 	socket->SetPostCompletionCallback([engine](BASharedPtr<BASocket>& sock, BAOverlapped* overlapped)->bool {
 		return engine->PostCompletionPort(sock, overlapped);
@@ -17,15 +15,43 @@ bool BANetworkEngine::RegistSocket(BASharedPtr<BASocket>& socket)
 	return result.second;
 }
 
-bool BANetworkEngine::UnregistSocket(ULONG_PTR key)
+bool BANetworkEngine::UnregistSocket(BASharedPtr<BASocket>& socket)
 {
-	BALockGuard lock(_cs);
-
-	auto iter = _sockets.find(key);
-	if(iter != _sockets.end())
+	auto iter = _sockets.find(socket);
+	if (iter != _sockets.end())
+	{
+		auto listen_iter = _listen_sockets.find(iter->second);
+		if (listen_iter != _listen_sockets.end())
+		{
+			std::get<0>(listen_iter->second)->Accept();
+		}
 		_sockets.erase(iter);
+	}
 
 	return true;
+}
+
+bool BANetworkEngine::DelayCloseSockets(bool immediately)
+{
+	std::vector<std::pair<BASharedPtr<BASocket>, std::chrono::steady_clock::time_point>> delay_vec(_delay_close_sockets.begin(), _delay_close_sockets.end());
+	sort(delay_vec.begin(), delay_vec.end(), [](const std::pair<BASharedPtr<BASocket>, std::chrono::steady_clock::time_point>& a, const std::pair<BASharedPtr<BASocket>, std::chrono::steady_clock::time_point>& b)->bool {
+		if (a.second < b.second)
+			return true;
+		return false;
+		});
+
+	auto cur_time = std::chrono::steady_clock::now();
+	for (auto iter = delay_vec.begin(); iter != delay_vec.end(); iter++)
+	{
+		if (cur_time < iter->second || immediately)
+			break;
+
+		UnregistSocket(iter->first);
+		_delay_close_sockets.erase(iter->first);
+		InfoLog("Socket Close");
+	}
+
+	return false;
 }
 
 bool BANetworkEngine::PostCompletionPort(BASharedPtr<BASocket>& socket, BAOverlapped* overlapped)
@@ -35,47 +61,84 @@ bool BANetworkEngine::PostCompletionPort(BASharedPtr<BASocket>& socket, BAOverla
 
 void BANetworkEngine::OnClose(BASharedPtr<BASocket>& socket)
 {
+	auto listen = _listen_sockets.find((ULONG_PTR)socket.get());
+	if (listen != _listen_sockets.end())
+	{
+		auto listen_socket = std::get<0>(listen->second);
+		auto listen_config = std::get<1>(listen->second);
+
+		if (false == Listen(listen_socket, listen_config))
+		{
+			auto weak = listen_socket->weak_from_this();
+			auto close_overlapped = BA_NEW BAOverlapped_Close(weak);
+			//Repeat Listen;
+			PostQueuedCompletionStatus(_listen_iocp_handle, 0, (ULONG_PTR)listen_socket.get(), close_overlapped);
+		}
+		return;
+	}
+
+	auto close_time = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+	auto result = _delay_close_sockets.insert(std::make_pair(socket, close_time));
+
+	if (result.second == false)
+		return;
+
+	socket->GetSession()->SetState(SessionState::DISCONNECT);
 	socket->Close();
-	UnregistSocket((ULONG_PTR)socket.get());
-	InfoLog("Socket Close");
 }
 
 void BANetworkEngine::OnAccept(ULONG_PTR key, BASharedPtr<BASocket>& client, DWORD trans_byte)
 {
-	auto iter = _network_configs.find(key);
-	if (iter == _network_configs.end())
-		return;
+	auto iter = _listen_sockets.find(key);
 
-	client->SetOptions(iter->second._option);
+	if (iter == _listen_sockets.end())
+	{
+		client->Close();
+		return;
+	}
+
+	auto config = std::get<1>(iter->second);
+	client->SetOptions(config._option);
 
 	auto iocp_result = CreateIoCompletionPort((HANDLE)client->GetSocket(), _iocp_handle, key, 0);
 	if (iocp_result == NULL)
 	{
+		client->Close();
 		ErrorLog("Iocp failed to register the client. ErrorCode[%d]", GetLastError());
 		return;
 	}
 
-	if (false == RegistSocket(client))
-		return;
+	RegistSocket(client, key);
 
 	auto session = BAMakeShared<BASession>();
 	session->SetSocket(client);
-	session->SetEncryt(iter->second._encrypt);
+	session->SetEncryt(config._encrypt);
 	client->SetSession(session);
 	client->OnAccept(trans_byte);
-		
+
 	OnAcceptComplete(session);
+}
+
+void BANetworkEngine::OnPreConnct(BASharedPtr<BASocket>& connect, DWORD trans_byte)
+{
+	auto weak = connect->weak_from_this();
+	auto overlapped =  BA_NEW BAOverlapped_Connect(weak);
+	/*
+	* send event to listen_thread.
+	*/
+	if (false == PostQueuedCompletionStatus(_listen_iocp_handle, trans_byte, (ULONG_PTR)connect.get(), overlapped))
+	{
+		InfoLog("Input PostQueuedCompletionStatus Failed!");
+		connect->Close();
+		return;
+	}
 }
 
 void BANetworkEngine::OnConnect(BASharedPtr<BASocket>& connect, DWORD trans_byte)
 {
-	if (false == RegistSocket(connect))
-		return;
+	RegistSocket(connect);
 
-	auto session = BAMakeShared<BASession>();
-	session->SetSocket(connect);
-	connect->SetSession(session);
-
+	auto session = connect->GetSession();
 	OnConnectComplete(session);
 }
 
@@ -88,43 +151,38 @@ bool BANetworkEngine::Initialize(std::vector<NetworkConfig>& configs)
 		return false;
 	}
 
+	_listen_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
+	if (_listen_iocp_handle == NULL) {
+		ErrorLog("listen handle CreateIoCompletionPort failed with error: %u\n", GetLastError());
+		return false;
+	}
+
 	_iocp_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
 	if (_iocp_handle == NULL) {
-		ErrorLog("CreateIoCompletionPort failed with error: %u\n", GetLastError());
+		ErrorLog("Socket handle CreateIoCompletionPort failed with error: %u\n", GetLastError());
 		return false;
 	}
 
 	for (auto listen_config : configs)
 	{
 		auto listen_socket = BASocket::CreateSocket();
+		
 		if (false == listen_socket->InitSocket())
 		{
 			ErrorLog("Create Listen Socket Failed");
 			return false;
 		}
 
-		auto iocp_result = CreateIoCompletionPort((HANDLE)listen_socket->GetSocket(), _iocp_handle, (ULONG_PTR)listen_socket.get(), 0);
+		auto iocp_result = CreateIoCompletionPort((HANDLE)listen_socket->GetSocket(), _listen_iocp_handle, (ULONG_PTR)listen_socket.get(), 0);
 		if (iocp_result == NULL)
 		{
 			ErrorLog("CreateIoCompletionPort listen socket regist failed!");
 			return false;
 		}
 
-		SOCKADDR_IN server_addr;
-		memset(&server_addr, 0x00, sizeof(server_addr));
-		server_addr.sin_family = AF_INET;
-		server_addr.sin_port = htons(listen_config._port);
-		server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+		Listen(listen_socket, listen_config);
 
-
-		if (false == listen_socket->Bind(server_addr))
-			return false;
-
-		if (false == listen_socket->Listen(5))
-			return false;
-
-		_network_configs.insert(std::make_pair((ULONG_PTR)listen_socket.get(), listen_config));
-		_sockets.insert(std::make_pair((ULONG_PTR)listen_socket.get(), listen_socket));
+		_listen_sockets.insert(std::make_pair((LISTEN_PTR)listen_socket.get(), std::make_tuple(listen_socket, listen_config)));
 	}
 
 	return true;
@@ -132,21 +190,21 @@ bool BANetworkEngine::Initialize(std::vector<NetworkConfig>& configs)
 
 bool BANetworkEngine::StartNetwork(int thread_count)
 {
+	auto listen = BAMakeShared<BAAsyncThread<void>>();
+	listen->Run(std::bind(&BANetworkEngine::SocketManageThreadLoop, this), true);
+	_threads.push_back(std::static_pointer_cast<IThread>(listen));
+
 	for (int i = 0; i < thread_count; i++)
 	{
-		auto async = BAMakeShared<BAAsyncThread<void>>();
-		async->Run(std::bind(&BANetworkEngine::NetworkThreadLoop, this), true);
+		auto async = BAMakeShared<BAAsyncThread<void, HANDLE&>>();
+		async->Run(std::bind(&BANetworkEngine::NetworkThreadLoop, this, std::placeholders::_1), true, _iocp_handle);
 		_threads.push_back(std::static_pointer_cast<IThread>(async));
 	}
 
-	for (auto listen : _network_configs)
+	for (auto listen : _listen_sockets)
 	{
-		auto find = _sockets.find(listen.first);
-		if (find == _sockets.end())
-			return false;
-
-		auto listen_socket = find->second;
-		auto config = listen.second;
+		auto listen_socket = std::get<0>(listen.second);
+		auto config = std::get<1>(listen.second);
 		for(int i = 0; i< config._max_client; i++)
 			listen_socket->Accept();
 	}
@@ -156,34 +214,46 @@ bool BANetworkEngine::StartNetwork(int thread_count)
 	return true;
 }
 
-bool BANetworkEngine::Connect(const SOCKADDR_IN& sock_addr, const SocketOption& option)
+BASharedPtr<BASession> BANetworkEngine::Connect(const SOCKADDR_IN& sock_addr, const SocketOption& option)
 {
 	auto connect_socket = BASocket::CreateSocket();
 	if (false == connect_socket->InitSocket())
-		return false;
+		return nullptr;
 
 	connect_socket->SetOptions(option);
+
+	auto session = BAMakeShared<BASession>();
+	session->SetSocket(connect_socket);
+	connect_socket->SetSession(session);
 
 	auto iocp_result = CreateIoCompletionPort((HANDLE)connect_socket->GetSocket(), _iocp_handle, (ULONG_PTR)connect_socket.get(), 0);
 	if (iocp_result == NULL)
 	{
 		ErrorLog("CreateIoCompletionPort connect socket regist failed!");
-		return false;
+		return nullptr;
 	}
 
 	if (false == connect_socket->Connect(sock_addr))
-		return false;
+	{
+		return nullptr;
+	}
 
-	return true;
+	return session;
 }
 
 bool BANetworkEngine::Release()
 {
-	_network_configs.clear();
 	for (auto pair : _sockets)
 	{
-		pair.second->Shutdown();
+		pair.first->Close();
 	}
+
+	for (auto listen : _listen_sockets)
+	{
+		auto listen_socket = std::get<0>(listen.second);
+		listen_socket->Close();
+	}
+	_listen_sockets.clear();
 
 	for (auto worker : _threads)
 	{
@@ -192,29 +262,40 @@ bool BANetworkEngine::Release()
 	}
 	_threads.clear();
 
+	DelayCloseSockets(true);
+
 	return true;
 }
 
-void BANetworkEngine::NetworkThreadLoop()
+void BANetworkEngine::Loop()
+{
+	DelayCloseSockets();
+}
+
+void BANetworkEngine::NetworkThreadLoop(HANDLE& iocp)
 {
 	DWORD trans_byte = 0;
 	ULONG_PTR completion_key = 0;
 	BAOverlapped* overlapped = nullptr;
-	
+
 	auto process = [](BANetworkEngine* engine, BAOverlapped* overlapped, DWORD trans_byte)->void {
 		overlapped->SetEngine(engine);
 		overlapped->SetTransByte(trans_byte);
 		OverlappedTaskSeparator::Work(overlapped);
 	};
 
-	if (false == GetQueuedCompletionStatus(GetIOCPHandle(), &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
+	if (false == GetQueuedCompletionStatus(iocp, &trans_byte, &completion_key, (LPOVERLAPPED*)&overlapped, 500))
 	{
 		if (overlapped != NULL)
 		{
 			ErrorLog("Client unexpected termination!!");
 			auto socket = overlapped->GetSocket();
 			if (socket != nullptr)
-				OnClose(socket);
+			{
+				auto weak = socket->weak_from_this();
+				auto close_overlapped = BA_NEW BAOverlapped_Close(weak);
+				PostQueuedCompletionStatus(_listen_iocp_handle, trans_byte, (ULONG_PTR)socket.get(), close_overlapped);
+			}
 
 			OverlappedTaskSeparator::Delete(overlapped);
 		}
@@ -232,4 +313,28 @@ void BANetworkEngine::NetworkThreadLoop()
 	}
 
 	process(this, overlapped, trans_byte);
+}
+
+void BANetworkEngine::SocketManageThreadLoop()
+{
+	DelayCloseSockets();
+	NetworkThreadLoop(_listen_iocp_handle);
+}
+
+bool BANetworkEngine::Listen(BASharedPtr<BASocket>& listen_socket, NetworkConfig& config)
+{
+	SOCKADDR_IN server_addr;
+	memset(&server_addr, 0x00, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(config._port);
+	server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+
+
+	if (false == listen_socket->Bind(server_addr))
+		return false;
+
+	if (false == listen_socket->Listen(5))
+		return false;
+
+	return true;
 }

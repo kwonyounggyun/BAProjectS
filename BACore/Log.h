@@ -1,5 +1,6 @@
 #pragma once
-
+#include "BALock.h"
+#include <sstream>
 #define MAX_LOG_LENGTH 1024
 
 #define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, _T(data), __VA_ARGS__)
@@ -34,6 +35,8 @@ class CLog
 public:
 	static bool WriteLog(LogType::en type, const TCHAR* data, ...)
 	{
+		static BACS _cs;
+		BASmartCS lock(_cs);
 		SYSTEMTIME SystemTime;
 		TCHAR CurrentDate[32] = { 0, };
 		TCHAR CurrentFileName[MAX_PATH] = { 0, };
@@ -55,14 +58,25 @@ public:
 		if (!FilePtr)
 			return false;
 
-		_ftprintf(FilePtr, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
-		_sntprintf_s(DebugLog, MAX_LOG_LENGTH, _T("[%s] [%s] %s\n"), CurrentDate, LogType::GetString(type), Log);
+#if defined(_UNICODE)
+		std::wostringstream ss;
+#else
+		std::ostringstream ss;
+#endif
+		ss << std::this_thread::get_id();
+		auto thread_id = ss.str();
 
+		_ftprintf(FilePtr, _T("[%s] Thread[%s] [%s] %s\n"), CurrentDate, thread_id.c_str(), LogType::GetString(type), Log);
+#if defined(_DEBUG)
+		_sntprintf_s(DebugLog, MAX_LOG_LENGTH, _T("[%s] Thread[%s] [%s] %s\n"), CurrentDate, thread_id.c_str(), LogType::GetString(type), Log);
+#endif
 		fflush(FilePtr);
 		fclose(FilePtr);
 
+#if defined(_DEBUG)
 		OutputDebugString(DebugLog);
 		_tprintf(_T("%s"), DebugLog);
+#endif
 		return true;
 	}
 };
