@@ -39,8 +39,7 @@ public:
 	}
 	virtual bool Join() override
 	{
-		if (_fu.wait_for(std::chrono::seconds(5)) != std::future_status::ready)
-			return false;
+		_fu.wait();
 
 		return true;
 	}
@@ -55,7 +54,7 @@ public:
 				{
 					call(args ...);
 				}
-				}, _state, _call, args ...));
+				}, std::ref(_state), std::ref(_call), args ...));
 		}
 		else
 		{

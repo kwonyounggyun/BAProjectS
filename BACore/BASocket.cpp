@@ -76,7 +76,7 @@ bool BASocket::Listen(int backlog)
 	return true;
 }
 
-bool BASocket::Accept()
+bool BASocket::Accept(BASharedPtr<BASocket>& client)
 {
 	LPFN_ACCEPTEX lpfn_acceptEx = NULL;
 	GUID guid_acceptEx = WSAID_ACCEPTEX;
@@ -90,9 +90,6 @@ bool BASocket::Accept()
 		ErrorLog("WSAIoctl Failed");
 		return false;
 	}
-
-	auto client = BASocket::CreateSocket();
-	client->InitSocket();
 
 	auto weak = weak_from_this();
 	BAOverlapped_Accept* overlapped = BA_NEW BAOverlapped_Accept(weak);
@@ -209,26 +206,18 @@ void BASocket::OnConnect(DWORD trans_byte)
 	Recv();
 }
 
-void BASocket::OnRecv(DWORD trans_byte)
+bool BASocket::OnRecv(DWORD trans_byte)
 {
-	if (trans_byte == 0)
+	if (FALSE == _recv_buf.UpdateRecv(trans_byte))
 	{
-		InfoLog("[%d] Socket Close", _socket);
-		Close();
+		ErrorLog("[%s] Never come in!", __FUNCTION__);
+		return false;
 	}
-	else
-	{
-		if (FALSE == _recv_buf.UpdateRecv(trans_byte))
-		{
-			ErrorLog("[%s] Never come in!", __FUNCTION__);
-			Close();
-		}
-		else
-		{
-			_session->OnRecv();
-			Recv();
-		}
-	}
+
+	_session->OnRecv();
+	Recv();
+
+	return true;
 }
 
 void BASocket::OnSend(DWORD trans_byte)

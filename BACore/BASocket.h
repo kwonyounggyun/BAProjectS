@@ -17,9 +17,8 @@ class BAOverlapped;
 class BASocket : public BASharedObject<BASocket>
 {
 	friend class BASession;
-
+	friend class BANetworkEngine;
 private:
-	std::function<bool (BASharedPtr<BASocket>&, BAOverlapped*)> _post_completion_callback;
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
 
@@ -40,7 +39,7 @@ public:
 
 	bool Bind(const SOCKADDR_IN& sock_addr);
 	bool Listen(int backlog);
-	bool Accept();
+	bool Accept(BASharedPtr<BASocket>& client);
 	bool Connect(const SOCKADDR_IN& sock_addr);
 	
 	void Close();
@@ -52,12 +51,9 @@ public:
 	void SetOptions(SocketOption option);
 	void Shutdown();
 
-public:
+private:
 	void OnAccept(DWORD trans_byte);
 	void OnConnect(DWORD trans_byte);
-	void OnRecv(DWORD trans_byte);
+	bool OnRecv(DWORD trans_byte);
 	void OnSend(DWORD trans_byte);
-
-public:
-	void SetPostCompletionCallback(std::function<bool(BASharedPtr<BASocket>&, BAOverlapped*)> post_completion_callback) { _post_completion_callback = post_completion_callback; }
 };

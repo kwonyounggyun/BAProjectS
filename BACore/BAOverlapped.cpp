@@ -6,18 +6,13 @@
 void BAOverlapped_Recv::CompleteIO()
 {
 	if (auto socket = _socket.lock())
-	{
-		if (_trans_byte != 0)
-			socket->OnRecv(_trans_byte);
-		else
-			_engine->OnClose(socket);
-	}
+		_engine->OnRecv(socket, _trans_byte);
 }
 
 void BAOverlapped_Send::CompleteIO()
 {
 	if (auto socket = _socket.lock())
-		socket->OnSend(_trans_byte);
+		_engine->OnSend(socket, _trans_byte);
 }
 	
 void BAOverlapped_Accept::CompleteIO()
@@ -29,7 +24,6 @@ void BAOverlapped_Accept::CompleteIO()
 void BAOverlapped_Connect::CompleteIO()
 {
 	_engine->OnConnect(_connect, _trans_byte);
-	_connect->OnConnect(_trans_byte);
 }
 
 void BAOverlapped_PreConnect::CompleteIO()

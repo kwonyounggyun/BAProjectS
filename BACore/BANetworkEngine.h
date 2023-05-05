@@ -25,19 +25,24 @@ class BANetworkEngine
 private:
 	//  Single Thread mem start
 	std::map<LISTEN_PTR, std::tuple<BASharedPtr<BASocket>, NetworkConfig>> _listen_sockets;
+
 	std::map<BASharedPtr<BASocket>, LISTEN_PTR> _sockets;
+	std::map<BASharedPtr<BASocket>, LISTEN_PTR> _wait_sockets;
+
 	using MAP_DELAY_CLOSE = std::map<BASharedPtr<BASocket>, std::chrono::steady_clock::time_point>;
-	BALock _unregist_cs;
 	MAP_DELAY_CLOSE _delay_close_sockets;
 	//  Single Thread mem end
 
 	std::vector<BASharedPtr<IThread>> _threads;
-	std::list<std::tuple<BASharedPtr<BASocket>, LISTEN_PTR>> _regist_sockets;
 
 	HANDLE _iocp_handle;
 	HANDLE _listen_iocp_handle;
 
+	std::atomic<bool> _listen_able;
+
 private:
+	void Accept(BASharedPtr<BASocket>& listen_socket);
+
 	bool RegistSocket(BASharedPtr<BASocket>& socket, LISTEN_PTR listen_key = CONNECT_SOCKET_KEY);
 	bool UnregistSocket(BASharedPtr<BASocket>& socket);
 	/*
@@ -54,9 +59,14 @@ public:
 	bool PostCompletionPort(BASharedPtr<BASocket>& socket, BAOverlapped* overlapped);
 
 public:
-	BANetworkEngine() : _iocp_handle(NULL) {}
+	BANetworkEngine() : _iocp_handle(NULL), _listen_able(false) {}
 	virtual ~BANetworkEngine() {}
 
+	void CloseSocket(const BASharedPtr<BASocket>& socket);
+
+	//Overlapped call
+	void OnRecv(BASharedPtr<BASocket>& socket, DWORD trans_byte);
+	void OnSend(BASharedPtr<BASocket>& socket, DWORD trans_byte);
 	void OnClose(BASharedPtr<BASocket>& socket);
 	void OnAccept(ULONG_PTR key, BASharedPtr<BASocket>& client, DWORD trans_byte);
 	void OnPreConnct(BASharedPtr<BASocket>& connect, DWORD trans_byte);
