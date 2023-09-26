@@ -230,6 +230,7 @@ copy $(ProjectDir)\*.h D:\Projects\BAProject\Source\ThirdParty\BANetworkEngine\i
     <ClCompile Include="BASession.cpp" />
     <ClCompile Include="BASocket.cpp" />
     <ClCompile Include="BAThread.cpp" />
+    <ClCompile Include="INetworkBuffer.cpp" />
     <ClCompile Include="NetMessage.cpp" />
     <ClCompile Include="Noncopyable.h" />
     <ClCompile Include="SerializedObject.cpp" />

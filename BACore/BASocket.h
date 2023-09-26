@@ -16,8 +16,6 @@ class BASession;
 class BAOverlapped;
 class BASocket : public BASharedObject<BASocket>
 {
-	friend class BASession;
-	friend class BANetworkEngine;
 private:
 	SOCKET _socket;
 	BANetworkBuffer _recv_buf;
@@ -51,7 +49,7 @@ public:
 	void SetOptions(SocketOption option);
 	void Shutdown();
 
-private:
+public:
 	void OnAccept(DWORD trans_byte);
 	void OnConnect(DWORD trans_byte);
 	bool OnRecv(DWORD trans_byte);

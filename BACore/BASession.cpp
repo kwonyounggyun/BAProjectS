@@ -31,23 +31,17 @@ void BASession::OnRecv()
 
 void BASession::EnqueueMsg(BASharedPtr<NetMessage>& msg)
 {
-	if (auto obj = _object.lock())
-	{
-		auto obj_ptr = obj.get();
-		auto task = BAMakeShared<PacketTask>([msg, obj_ptr]()->void {
-			obj_ptr->CallHandle(msg->GetProtocol(), msg->GetBuffer<char>());
-			});
+	auto obj = _object;
+	auto task = BAMakeShared<PacketTask>([&msg, obj]()->void {
+		obj->CallHandle(msg->GetProtocol(), msg->GetBuffer<char>());
+	});
 
-		obj->AddNetworkTask(task);
-	}
+	_object->AddNetworkTask(task);
 }
 
 
 void BASession::SendMsg(BASharedPtr<NetMessage>& msg)
 {
-	if (GetState() != SessionState::ACTIVE)
-		return;
-
 	if (auto socket = _socket.lock())
 	{
 		if (IsEncryt())

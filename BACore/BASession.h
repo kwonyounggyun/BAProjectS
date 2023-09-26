@@ -24,27 +24,26 @@ class BASession : public BASharedObject<BASession>
 private:
 	BAWeakPtr<BASocket> _socket;
 	bool _encryt;
-	BAWeakPtr<INetworkObject> _object;
-
-	std::atomic<SessionState> _state;
+	INetworkObject* _object;
 
 	BACS _cs;
 
 private:
 	void SetSocket(BASharedPtr<BASocket>& socket) { _socket = socket; }
-	void SetState(SessionState state) { _state.store(state); }
 
+public:
 	void OnRecv();
+
+private:
 	void EnqueueMsg(BASharedPtr<NetMessage>& msg);
 	void SetEncryt(bool encryt) { _encryt = encryt; }
 	inline bool IsEncryt() const { return false; }
 
 public:
-	inline SessionState GetState() const { return _state.load(); }
 	void SendMsg(BASharedPtr<NetMessage>& msg);
 	void Close();
-	void SetObject(BASharedPtr<INetworkObject> object) { _object = object; }
-	explicit BASession() : _encryt(false), _state(SessionState::WAIT) {}
+	void SetObject(INetworkObject* object) { _object = object; }
+	explicit BASession() : _encryt(false) {}
 	~BASession()
 	{
 
