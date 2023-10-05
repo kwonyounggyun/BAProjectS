@@ -26,7 +26,7 @@ public:
     __int32 _tail;
 };
 
-struct BABufferUnitNode : public BAMemoryPool<BABufferUnitNode, MAX_INIT_BUFFER_UNIT>
+struct BABufferUnitNode //: public BAMemoryPool<BABufferUnitNode, MAX_INIT_BUFFER_UNIT>
 {
 public:
     BABufferUnitNode() :_next(nullptr)
